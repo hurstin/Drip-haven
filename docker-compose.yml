@@ -1,0 +1,21 @@
+# compose file version
+version: '3.8'
+# define all containers
+
+# mongoDb, Postgres, redis, elasticSearch
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: dripHaven
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # command: mongod --noauth --bind_ip_all
+
+volumes:
+  postgres_data:
