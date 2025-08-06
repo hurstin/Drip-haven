@@ -23,15 +23,21 @@ export class WasherController {
     return this.washerService.registerAsWasher(req.user.userId, Body);
   }
 
+  @Roles('washer')
+  @Get('profile')
+  getWasherProfile(@Request() req: any) {
+    return this.washerService.getWasherById(req.user.userId);
+  }
+
   @Roles('admin')
   @Get('approve/:id')
-  approveWasher(@Param('id') id: number) {
-    return this.washerService.approveWasher(id);
+  approveWasher(@Param('id') userId: number) {
+    return this.washerService.approveWasher(userId);
   }
 
   @Roles('admin')
   @Get('reject/:id')
-  rejectWasher(@Param('id') id: number) {
-    return this.washerService.rejectWasher(id);
+  rejectWasher(@Param('id') userId: number) {
+    return this.washerService.rejectWasher(userId);
   }
 }

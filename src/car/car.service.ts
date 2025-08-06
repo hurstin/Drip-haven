@@ -62,6 +62,22 @@ export class CarService {
 
     if (!car) throw new NotFoundException('car not found');
 
+    // Check if plate number is being updated and if it already exists
+    if (
+      updateCarDto.plateNumber &&
+      updateCarDto.plateNumber !== car.plateNumber
+    ) {
+      const existingCar = await this.carRepository.findOne({
+        where: { plateNumber: updateCarDto.plateNumber },
+      });
+      if (existingCar) {
+        throw new BadRequestException('Plate number belongs to another car');
+      }
+    }
+
+    // Apply updates to the car entity
+    Object.assign(car, updateCarDto);
+
     return this.carRepository.save(car);
   }
 

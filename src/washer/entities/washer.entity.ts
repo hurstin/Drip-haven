@@ -24,6 +24,6 @@ export class Washer {
   @Column()
   idPhotoUrl: string;
 
-  // @OneToMany(() => ServiceMenu, service => service.washer)
-  // services: ServiceMenu[];
+  @OneToMany(() => ServiceMenu, (service) => service.washer)
+  services: ServiceMenu[];
 }

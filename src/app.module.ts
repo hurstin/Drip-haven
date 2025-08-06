@@ -15,6 +15,7 @@ import { WasherModule } from './washer/washer.module';
 import { Washer } from './washer/entities/washer.entity';
 import { RolesGuard } from './auth/guards/role.guard';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { ServiceMenu } from './service-menu/entities/service-menu.entity';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Car, Washer],
+        entities: [User, Car, Washer, ServiceMenu],
         synchronize: true,
       }),
       inject: [ConfigService],

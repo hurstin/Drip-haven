@@ -1,34 +1,49 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Req,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ServiceMenuService } from './service-menu.service';
 import { CreateServiceMenuDto } from './dto/create-service-menu.dto';
 import { UpdateServiceMenuDto } from './dto/update-service-menu.dto';
+import { Roles } from 'src/auth/decorator/roles.decorator';
 
-@Controller('service-menu')
+@Controller('services')
 export class ServiceMenuController {
   constructor(private readonly serviceMenuService: ServiceMenuService) {}
 
-  @Post()
-  create(@Body() createServiceMenuDto: CreateServiceMenuDto) {
-    return this.serviceMenuService.create(createServiceMenuDto);
+  @Post('create')
+  @Roles('washer')
+  createService(
+    @Req() req: any,
+    @Body() createServiceDto: CreateServiceMenuDto,
+  ) {
+    return this.serviceMenuService.createService(
+      req.user.userId,
+      createServiceDto,
+    );
+  } // list all services
+  @Get('all')
+  @Roles('admin')
+  listAllServices() {
+    return this.serviceMenuService.listAllServices();
   }
 
   @Get()
-  findAll() {
-    return this.serviceMenuService.findAll();
+  @Roles('washer')
+  listMyServices(@Req() req: any) {
+    return this.serviceMenuService.listServices(req.user.userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.serviceMenuService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateServiceMenuDto: UpdateServiceMenuDto) {
-    return this.serviceMenuService.update(+id, updateServiceMenuDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.serviceMenuService.remove(+id);
+  @Roles('washer')
+  getService(@Param('id', ParseIntPipe) userId: number) {
+    return this.serviceMenuService.listServices(userId);
   }
 }

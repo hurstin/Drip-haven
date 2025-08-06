@@ -9,5 +9,6 @@ import { UserModule } from 'src/user/user.module';
   imports: [TypeOrmModule.forFeature([Washer]), UserModule],
   controllers: [WasherController],
   providers: [WasherService],
+  exports: [WasherService],
 })
 export class WasherModule {}

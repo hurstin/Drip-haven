@@ -50,9 +50,9 @@ export class WasherService {
 
   // admin approves KYC
   // NOTE: apply sending email to user approved
-  async approveWasher(washerId: number) {
+  async approveWasher(userId: number) {
     const washer = await this.washerRepository.findOne({
-      where: { id: washerId },
+      where: { user: { id: userId } },
       relations: ['user'],
     });
     if (!washer) throw new NotFoundException('Washer not found');
@@ -70,14 +70,30 @@ export class WasherService {
 
   // admin reject KYC
   // NOTE: apply sending email to user rejected to resend kyc
-  async rejectWasher(washerId: number) {
+  async rejectWasher(userId: number) {
     const washer = await this.washerRepository.findOne({
-      where: { id: washerId },
+      where: { user: { id: userId } },
     });
     if (!washer) throw new NotFoundException('Washer not found');
 
     // reject washer
     washer.kycStatus = 'rejected';
+
+    // set userRole to user
+    await this.usersService.updateMyProfile(washer.user.id, {
+      role: UserRole.USER,
+    });
     return this.washerRepository.save(washer);
+  }
+
+  // get a washer by id
+  async getWasherById(userId: number) {
+    // get washer by user id
+    const washer = await this.washerRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['services'],
+    });
+    if (!washer) throw new NotFoundException('Washer not found');
+    return washer;
   }
 }

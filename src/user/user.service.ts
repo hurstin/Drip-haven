@@ -244,7 +244,10 @@ export class UserService {
   async showCurrentUser(email: string): Promise<User | null> {
     // Use findOneBy() for single result
 
-    const user = await this.usersRepository.findOneBy({ email });
+    const user = await this.usersRepository.findOne({
+      where: { email },
+      relations: ['washerProfile'],
+    });
 
     if (!user) throw new BadRequestException('user not found');
     return user;
