@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -42,9 +43,26 @@ export class ServiceMenuService {
 
   // list all my services
   async listServices(userId: number) {
-    const washer = await this.washerService.getWasherById(userId);
-    if (!washer) throw new NotFoundException('Washer not found');
-    return washer.services;
+    const services = await this.serviceRepository.find({
+      where: { washer: { user: { id: userId } } },
+    });
+    if (!services || services.length === 0)
+      throw new NotFoundException('Washer not found');
+    return services;
+  }
+
+  // get a service
+  async getService(serviceId: number) {
+    const service = await this.serviceRepository.findOne({
+      where: {
+        id: serviceId,
+        isActive: false,
+      },
+      relations: ['washer'],
+    });
+    if (!service) throw new NotFoundException('service not found');
+
+    return service;
   }
 
   async listAllServices() {
@@ -67,4 +85,84 @@ export class ServiceMenuService {
     });
     return services;
   }
+
+  // update a service. modify with the code below
+  async updateService(
+    id: number,
+    userId: number,
+    updateServiceDto: UpdateServiceMenuDto,
+  ) {
+    const service = await this.serviceRepository.findOne({
+      where: { id },
+      relations: ['washer', 'washer.user'],
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        washer: {
+          id: true,
+          user: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!service) throw new NotFoundException('service not found');
+    if (service.washer.user.id !== userId) throw new ForbiddenException();
+    Object.assign(service, updateServiceDto);
+
+    return this.serviceRepository.save(service);
+  }
+
+  // delete a service
+  async deleteService(id: number, userId: number) {
+    // Optimized database query: removed unnecessary selects and relations
+    const service = await this.serviceRepository.findOne({
+      where: { id },
+      relations: ['washer.user'], // Only load necessary relation
+    });
+
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+
+    // Validate ownership with proper null checks
+    const ownerId = service.washer?.user?.id;
+    if (ownerId !== userId) {
+      throw new ForbiddenException();
+    }
+
+    // Efficient deletion using ID instead of full entity
+    return this.serviceRepository.delete(id);
+  }
 }
+
+// async updateService(
+//   id: number,
+//   userId: number,
+//   updateServiceDto: UpdateServiceMenuDto,
+// ) {
+//   // Load only necessary relations for ownership verification
+//   const service = await this.serviceRepository.findOne({
+//     where: { id },
+//     relations: ['washer.user'], // Only load the essential relation chain
+//   });
+
+//   if (!service) {
+//     throw new NotFoundException('Service not found');
+//   }
+
+//   // Safe ownership check with optional chaining
+//   const ownerId = service.washer?.user?.id;
+//   if (ownerId !== userId) {
+//     throw new ForbiddenException();
+//   }
+
+//   // Efficient update using repository's update method
+//   await this.serviceRepository.update(id, updateServiceDto);
+
+//   // Return updated entity without sensitive relations
+//   return this.serviceRepository.findOneBy({ id });
+// }

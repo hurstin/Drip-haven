@@ -54,6 +54,19 @@ export class CarService {
     return cars;
   }
 
+  // get a car
+  async getCar(carId: number, userId: number) {
+    const car = await this.carRepository.findOne({
+      where: {
+        id: carId,
+        user: { id: userId },
+      },
+    });
+    if (!car) throw new NotFoundException('car not found');
+
+    return car;
+  }
+
   // update a car for a user
   async updateCar(carId: number, userId: number, updateCarDto: UpdateCarDto) {
     const car = await this.carRepository.findOne({

@@ -16,6 +16,8 @@ import { Washer } from './washer/entities/washer.entity';
 import { RolesGuard } from './auth/guards/role.guard';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ServiceMenu } from './service-menu/entities/service-menu.entity';
+import { BookingModule } from './booking/booking.module';
+import { Booking } from './booking/entities/booking.entity';
 
 @Module({
   imports: [
@@ -34,7 +36,7 @@ import { ServiceMenu } from './service-menu/entities/service-menu.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Car, Washer, ServiceMenu],
+        entities: [User, Car, Washer, ServiceMenu, Booking],
         synchronize: true,
       }),
       inject: [ConfigService],
@@ -57,6 +59,7 @@ import { ServiceMenu } from './service-menu/entities/service-menu.entity';
       inject: [ConfigService],
     }),
     ServiceMenuModule,
+    BookingModule,
   ],
   controllers: [AppController],
   providers: [

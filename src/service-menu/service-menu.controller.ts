@@ -8,6 +8,7 @@ import {
   Delete,
   Req,
   ParseIntPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { ServiceMenuService } from './service-menu.service';
 import { CreateServiceMenuDto } from './dto/create-service-menu.dto';
@@ -30,7 +31,7 @@ export class ServiceMenuController {
     );
   } // list all services
   @Get('all')
-  @Roles('admin')
+  // @Roles('admin')
   listAllServices() {
     return this.serviceMenuService.listAllServices();
   }
@@ -45,5 +46,24 @@ export class ServiceMenuController {
   @Roles('washer')
   getService(@Param('id', ParseIntPipe) userId: number) {
     return this.serviceMenuService.listServices(userId);
+  }
+
+  @Patch('update/:id')
+  updateService(
+    @Param('id') id: number,
+    @Req() req: any,
+    @Body() updateServiceDto: UpdateServiceMenuDto,
+  ) {
+    return this.serviceMenuService.updateService(
+      id,
+      req.user.userId,
+      updateServiceDto,
+    );
+  }
+
+  @Delete('delete/:id')
+  @HttpCode(204)
+  deleteService(@Param('id') id: number, @Req() req: any) {
+    return this.serviceMenuService.deleteService(id, req.user.userId);
   }
 }

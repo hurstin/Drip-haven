@@ -21,6 +21,6 @@ export class ServiceMenu {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ nullable: true, default: false })
+  @Column({ default: false })
   isActive: boolean;
 }

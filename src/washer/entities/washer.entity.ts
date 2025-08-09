@@ -21,9 +21,18 @@ export class Washer {
   @Column({ default: 'pending' })
   kycStatus: 'pending' | 'approved' | 'rejected';
 
-  @Column()
+  @Column({ nullable: true })
   idPhotoUrl: string;
 
   @OneToMany(() => ServiceMenu, (service) => service.washer)
   services: ServiceMenu[];
+
+  @Column('double precision', { nullable: true })
+  latitude: number;
+
+  @Column('double precision', { nullable: true })
+  longitude: number;
+
+  @Column({ default: true })
+  isAvailable: boolean;
 }

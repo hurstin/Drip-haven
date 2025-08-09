@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Washer } from '../../washer/entities/washer.entity';
+import { Booking } from 'src/booking/entities/booking.entity';
 
 export enum UserRole {
   USER = 'user',

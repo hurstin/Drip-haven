@@ -11,6 +11,24 @@ import { Washer } from './entities/washer.entity';
 import { Repository } from 'typeorm';
 import { UserService } from 'src/user/user.service';
 import { UserRole } from 'src/user/entities/user.entity';
+import { getDistance } from 'src/utils/distance.util';
+
+// Define a type for the result structure
+type NearbyWasherResult = {
+  washer: {
+    id: number;
+    name: string;
+    rating?: number;
+    distance: number;
+  };
+  services: {
+    id: number;
+    name: string;
+    price: number;
+    duration?: number;
+    description: string;
+  }[];
+};
 
 @Injectable()
 export class WasherService {
@@ -95,5 +113,82 @@ export class WasherService {
     });
     if (!washer) throw new NotFoundException('Washer not found');
     return washer;
+  }
+
+  // get all washer
+  async getAllWasher() {
+    const washer = await this.washerRepository.find({
+      relations: ['services'],
+    });
+
+    if (!washer || washer.length === 0)
+      throw new NotFoundException('wahser not found');
+
+    return {
+      washer,
+    };
+  }
+
+  // src/washer/washer.service.ts
+  async updateWasherProfile(userId: number, updateData: any): Promise<Washer> {
+    const washer = await this.washerRepository.findOne({
+      where: { user: { id: userId } },
+    });
+
+    if (!washer) {
+      throw new NotFoundException('Washer profile not found');
+    }
+
+    // Update only basic profile fields
+    if (updateData.latitude !== undefined)
+      washer.latitude = updateData.latitude;
+    if (updateData.longitude !== undefined)
+      washer.longitude = updateData.longitude;
+    if (updateData.isAvailable !== undefined)
+      washer.isAvailable = updateData.isAvailable;
+
+    return this.washerRepository.save(washer);
+  }
+
+  async findNearbyWashersWithServices(
+    lat: number,
+    lng: number,
+    radiusKm: number = 5,
+  ) {
+    // Get all approved, available washers with their services
+    const washers = await this.washerRepository.find({
+      where: {
+        isAvailable: true,
+        kycStatus: 'approved',
+      },
+      relations: ['user', 'services'], // Include user details and services
+    });
+
+    const results: NearbyWasherResult[] = [];
+
+    for (const washer of washers) {
+      if (!washer.latitude || !washer.longitude) continue;
+
+      const distance = getDistance(lat, lng, washer.latitude, washer.longitude);
+
+      if (distance <= radiusKm) {
+        results.push({
+          washer: {
+            id: washer.id,
+            name: washer.user.name,
+            distance: parseFloat(distance.toFixed(2)),
+          },
+          services: washer.services.map((service) => ({
+            id: service.id,
+            name: service.name,
+            price: service.price,
+            description: service.description,
+          })),
+        });
+      }
+    }
+
+    // Sort by distance (nearest first)
+    return results.sort((a, b) => a.washer.distance - b.washer.distance);
   }
 }

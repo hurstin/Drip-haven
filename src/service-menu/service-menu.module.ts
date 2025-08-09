@@ -9,5 +9,6 @@ import { WasherModule } from 'src/washer/washer.module';
   imports: [TypeOrmModule.forFeature([ServiceMenu]), WasherModule],
   controllers: [ServiceMenuController],
   providers: [ServiceMenuService],
+  exports: [ServiceMenuService],
 })
 export class ServiceMenuModule {}
