@@ -4,7 +4,7 @@ import { User } from 'src/user/entities/user.entity';
 import { Washer } from 'src/washer/entities/washer.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-enum WasherResponse {
+export enum WasherResponse {
   ACCEPTED = 'accepted',
   DECLINED = 'declined',
 }
