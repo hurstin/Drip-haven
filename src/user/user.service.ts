@@ -370,7 +370,8 @@ export class UserService {
   }
 
   async findById(userId: number) {
-    const user = await this.usersRepository.findBy({ id: userId });
+    const user = await this.usersRepository.findOneBy({ id: userId });
+    if (!user) return;
     return user;
   }
 }

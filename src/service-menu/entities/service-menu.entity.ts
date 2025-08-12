@@ -1,5 +1,12 @@
+import { Booking } from 'src/booking/entities/booking.entity';
 import { Washer } from 'src/washer/entities/washer.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class ServiceMenu {
@@ -11,6 +18,9 @@ export class ServiceMenu {
     // eager: true,
   })
   washer: Washer;
+
+  @OneToMany(() => Booking, (booking) => booking.service)
+  booking: Booking[];
 
   @Column()
   name: string;

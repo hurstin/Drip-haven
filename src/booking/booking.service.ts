@@ -70,10 +70,17 @@ export class BookingService {
   async washerAcceptBooking(bookingId: number, washerUserId: number) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
-      relations: ['washer', 'washer.user'],
+      relations: ['service', 'service.washer.user'],
     });
+    console.log('booking=>', booking);
     if (!booking) throw new NotFoundException('booking not found');
-    if (booking.washer.user.id !== washerUserId)
+
+    // Add null check for washer first
+    if (!booking.service.washer) {
+      throw new ConflictException('Booking has no assigned washer');
+    }
+
+    if (booking.service.washer.user.id !== washerUserId)
       throw new ForbiddenException('not your booking');
     if (booking.status !== 'assigned')
       throw new ConflictException('Booking not awaiting washer reponse');
@@ -87,10 +94,10 @@ export class BookingService {
   async washerDeclineBooking(bookingId: number, washerUserId: number) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
-      relations: ['washer', 'washer.user'],
+      relations: ['service', 'service.washer.user'],
     });
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.washer.user.id !== washerUserId)
+    if (booking.service.washer.user.id !== washerUserId)
       throw new ForbiddenException('Not your booking');
     if (booking.status !== 'assigned')
       throw new ConflictException('Booking not awaiting washer response');
@@ -99,5 +106,91 @@ export class BookingService {
     booking.washerResponse = WasherResponse.DECLINED;
     // Optionally: notify user/admin
     return this.bookingRepo.save(booking);
+  }
+
+  // src/booking/booking.service.ts
+  async cancelBooking(bookingId: number, userId: number) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      relations: ['user'],
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.user.id !== userId)
+      throw new ForbiddenException('Not your booking');
+
+    if (!['assigned', 'accepted'].includes(booking.status)) {
+      throw new ConflictException('Booking cannot be cancelled at this stage');
+    }
+
+    booking.status = 'cancelled';
+    await this.bookingRepo.save(booking);
+
+    // Notify washer (if assigned)
+    // if (booking.washer) {
+    //   await this.notificationService.notifyUser(booking.washer.user.id, {
+    //     title: 'Booking Cancelled',
+    //     message: `Booking for ${booking.car?.model ?? 'car'} on ${booking.scheduledTime} was cancelled by the user.`,
+    //     type: 'booking'
+    //   });
+    // }
+
+    // Optionally: Notify admins
+    // await this.notificationService.notifyAdmins({ ... });
+
+    return booking;
+  }
+
+  async getAllBooking() {
+    const bookings = await this.bookingRepo.find({
+      relations: ['user', 'service'],
+      select: {
+        id: true,
+        scheduledTime: true,
+        status: true,
+        paymentStatus: true,
+        washerResponse: true,
+        user: {
+          name: true,
+        },
+        service: {
+          id: true,
+          name: true,
+        },
+      },
+    });
+
+    if (!bookings || bookings.length === 0)
+      throw new NotFoundException('no bookings found');
+
+    return {
+      bookings,
+    };
+  }
+
+  async getUserBooking(userId: number) {
+    const bookings = await this.bookingRepo.find({
+      where: { user: { id: userId } },
+      relations: ['user', 'service'],
+      select: {
+        id: true,
+        scheduledTime: true,
+        status: true,
+        paymentStatus: true,
+        washerResponse: true,
+        user: {
+          name: true,
+        },
+        service: {
+          id: true,
+          name: true,
+        },
+      },
+    });
+    if (!bookings || bookings.length === 0)
+      throw new NotFoundException('no bookings found');
+    return {
+      bookings,
+    };
   }
 }

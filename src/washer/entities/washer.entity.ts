@@ -1,3 +1,4 @@
+import { Booking } from 'src/booking/entities/booking.entity';
 import { ServiceMenu } from 'src/service-menu/entities/service-menu.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
@@ -26,6 +27,9 @@ export class Washer {
 
   @OneToMany(() => ServiceMenu, (service) => service.washer)
   services: ServiceMenu[];
+
+  // @OneToMany(() => Booking, (booking) => booking.washer)
+  // booking: Booking[];
 
   @Column('double precision', { nullable: true })
   latitude: number;

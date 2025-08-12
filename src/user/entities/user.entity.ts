@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { Washer } from '../../washer/entities/washer.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
+import { Notification } from 'src/notification/entities/notification.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -82,4 +83,10 @@ export class User {
     onDelete: 'CASCADE', // Delete cars when user is deleted
   })
   cars: Car[];
+
+  @OneToMany(() => Booking, (booking) => booking.user)
+  booking: Booking[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notification: Notification[];
 }

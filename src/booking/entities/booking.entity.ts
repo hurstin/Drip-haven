@@ -14,17 +14,17 @@ export class Booking {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (user) => user.booking)
   user: User;
 
   @ManyToOne(() => Car)
   car: Car;
 
-  @ManyToOne(() => ServiceMenu)
+  @ManyToOne(() => ServiceMenu, (service) => service.booking)
   service: ServiceMenu;
 
-  @ManyToOne(() => Washer, { nullable: true })
-  washer: Washer;
+  // @ManyToOne(() => Washer, (washer) => washer.booking) // Add inverse relation
+  // washer: Washer;
 
   @Column()
   scheduledTime: Date;

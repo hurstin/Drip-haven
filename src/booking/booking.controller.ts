@@ -21,16 +21,30 @@ export class BookingController {
     return this.bookingService.createBooking(req.user.userId, createBookingDto);
   }
 
-  @Get('accept/:id')
+  @Patch('accept/:id')
   acceptBooking(@Param('id') bookingId: string, @Req() req: any) {
     return this.bookingService.washerAcceptBooking(+bookingId, req.user.userId);
   }
 
-  @Get('decline/:id')
+  @Patch('decline/:id')
   declineBooking(@Param('id') bookingId: string, @Req() req: any) {
     return this.bookingService.washerDeclineBooking(
       +bookingId,
       req.user.userId,
     );
+  }
+  @Patch('cancel/:id')
+  cancelBooking(@Param('id') bookingId: string, @Req() req: any) {
+    return this.bookingService.cancelBooking(+bookingId, req.user.userId);
+  }
+
+  @Get('all')
+  getAllBoooking() {
+    return this.bookingService.getAllBooking();
+  }
+
+  @Get('myBooking')
+  getMyBooking(@Req() req: any) {
+    return this.bookingService.getUserBooking(req.user.userId);
   }
 }

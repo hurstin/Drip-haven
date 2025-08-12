@@ -18,6 +18,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ServiceMenu } from './service-menu/entities/service-menu.entity';
 import { BookingModule } from './booking/booking.module';
 import { Booking } from './booking/entities/booking.entity';
+import { NotificationModule } from './notification/notification.module';
+import { Notification } from './notification/entities/notification.entity';
 
 @Module({
   imports: [
@@ -36,7 +38,7 @@ import { Booking } from './booking/entities/booking.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Car, Washer, ServiceMenu, Booking],
+        entities: [User, Car, Washer, ServiceMenu, Booking, Notification],
         synchronize: true,
       }),
       inject: [ConfigService],
@@ -60,6 +62,7 @@ import { Booking } from './booking/entities/booking.entity';
     }),
     ServiceMenuModule,
     BookingModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [
