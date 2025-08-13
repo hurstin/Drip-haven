@@ -11,6 +11,7 @@ import { Booking, WasherResponse } from './entities/booking.entity';
 import { In, Repository } from 'typeorm';
 import { CarService } from 'src/car/car.service';
 import { ServiceMenuService } from 'src/service-menu/service-menu.service';
+import { TransactionService } from 'src/transaction/transaction.service';
 
 @Injectable()
 export class BookingService {
@@ -18,6 +19,7 @@ export class BookingService {
     @InjectRepository(Booking) private bookingRepo: Repository<Booking>,
     private carService: CarService,
     private serviceRepo: ServiceMenuService,
+    private transactionService: TransactionService,
   ) {}
 
   // create booking with user-selected washer
@@ -59,7 +61,7 @@ export class BookingService {
       latitude: Number(createBookingDto.latitude),
       longitude: Number(createBookingDto.longitude),
       status: 'assigned',
-      paymentStatus: 'unpaid',
+      paymentStatus: 'none',
       washerResponse: undefined,
     });
     // NOTE: notify washer
@@ -106,6 +108,54 @@ export class BookingService {
     booking.washerResponse = WasherResponse.DECLINED;
     // Optionally: notify user/admin
     return this.bookingRepo.save(booking);
+  }
+
+  async completeBooking(bookingId: number, washerUserId: number) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      relations: ['service', 'service.washer.user'],
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    if (!booking.service.washer) {
+      throw new ConflictException('Booking has no assigned washer');
+    }
+
+    if (booking.service.washer.user.id !== washerUserId)
+      throw new ForbiddenException('not your booking');
+
+    if (booking.status === 'accepted') {
+      booking.status = 'completed';
+      await this.bookingRepo.save(booking);
+      return { booking };
+    }
+    return { message: 'booking is not assigned or was cancelled' };
+  }
+
+  async approveBooking(bookingId: number, userId: number) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      relations: ['service', 'user'],
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    if (booking.user.id !== userId)
+      throw new ForbiddenException('Not your booking');
+
+    if (booking.status === 'completed') {
+      const transaction = await this.transactionService.initializeTransaction(
+        userId,
+        booking.service.id,
+      );
+      booking.status = 'paid';
+      await this.bookingRepo.save(booking);
+
+      return {
+        transaction,
+      };
+    }
   }
 
   // src/booking/booking.service.ts

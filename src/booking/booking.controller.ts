@@ -33,6 +33,17 @@ export class BookingController {
       req.user.userId,
     );
   }
+
+  @Patch('completed/:id')
+  completeBooking(@Param('id') bookingId: string, @Req() req: any) {
+    return this.bookingService.completeBooking(+bookingId, req.user.userId);
+  }
+
+  @Patch('approve/:id')
+  approveBooking(@Param('id') bookingId: string, @Req() req: any) {
+    return this.bookingService.approveBooking(+bookingId, req.user.userId);
+  }
+
   @Patch('cancel/:id')
   cancelBooking(@Param('id') bookingId: string, @Req() req: any) {
     return this.bookingService.cancelBooking(+bookingId, req.user.userId);

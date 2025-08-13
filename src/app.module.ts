@@ -20,6 +20,8 @@ import { BookingModule } from './booking/booking.module';
 import { Booking } from './booking/entities/booking.entity';
 import { NotificationModule } from './notification/notification.module';
 import { Notification } from './notification/entities/notification.entity';
+import { TransactionModule } from './transaction/transaction.module';
+import { Transaction } from './transaction/entities/transaction.entity';
 
 @Module({
   imports: [
@@ -38,7 +40,15 @@ import { Notification } from './notification/entities/notification.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Car, Washer, ServiceMenu, Booking, Notification],
+        entities: [
+          User,
+          Car,
+          Washer,
+          ServiceMenu,
+          Booking,
+          Notification,
+          Transaction,
+        ],
         synchronize: true,
       }),
       inject: [ConfigService],
@@ -63,6 +73,7 @@ import { Notification } from './notification/entities/notification.entity';
     ServiceMenuModule,
     BookingModule,
     NotificationModule,
+    TransactionModule,
   ],
   controllers: [AppController],
   providers: [

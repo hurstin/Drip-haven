@@ -2,7 +2,13 @@ import { Car } from 'src/car/entities/car.entity';
 import { ServiceMenu } from 'src/service-menu/entities/service-menu.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Washer } from 'src/washer/entities/washer.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 export enum WasherResponse {
   ACCEPTED = 'accepted',
@@ -36,11 +42,29 @@ export class Booking {
     | 'accepted'
     | 'declined'
     | 'in-progress'
+    | 'approve'
+    | 'dispute'
+    | 'paid'
     | 'completed'
     | 'cancelled';
 
-  @Column({ default: 'unpaid' })
-  paymentStatus: 'paid' | 'unpaid';
+  @Column({ default: 'none' })
+  paymentStatus: 'none' | 'authorized' | 'captured' | 'refunded' | 'failed';
+
+  // @Column({ nullable: true })
+  // paymentReference: string; // from payment gateway
+
+  // @CreateDateColumn()
+  // createdAt: Date;
+
+  // @Column({ nullable: true })
+  // completedAt: Date;
+
+  // @Column({ nullable: true })
+  // approvedAt: Date;
+
+  // @Column({ nullable: true })
+  // disputedAt: Date;
 
   @Column('double precision', { nullable: true })
   latitude: number;
