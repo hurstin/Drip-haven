@@ -51,8 +51,8 @@ export class Booking {
   @Column({ default: 'none' })
   paymentStatus: 'none' | 'authorized' | 'captured' | 'refunded' | 'failed';
 
-  // @Column({ nullable: true })
-  // paymentReference: string; // from payment gateway
+  @Column({ nullable: true })
+  paymentReference: string; // from payment gateway
 
   // @CreateDateColumn()
   // createdAt: Date;

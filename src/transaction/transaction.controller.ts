@@ -18,7 +18,6 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { InitializeTransactionDto } from './dto/initialize-transaction.dto';
 import { PaystackCallbackDto, PaystackWebhookDto } from './dto/paystack.dto';
-import { Transaction } from 'typeorm';
 import { PAYSTACK_WEBHOOK_SIGNATURE_KEY } from './constants';
 import { Public } from 'src/auth/decorator/public.decorator';
 
@@ -34,12 +33,13 @@ export class TransactionController {
     // @Body()
     dto: InitializeTransactionDto,
   ) {
+    console.log('initialize==>', dto);
     return await this.transactionService.initializeTransaction(req, dto);
   }
 
   @Public()
   @Get('callback')
-  async verifyTransaction(@Query() query: PaystackCallbackDto) {
+  async verifyTransaction(@Query() query: any) {
     return await this.transactionService.verifyTransaction(query);
   }
 

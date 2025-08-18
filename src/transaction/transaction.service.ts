@@ -131,6 +131,7 @@ export class TransactionService {
         paymentLink: data.authorization_url,
         serviceId: service.id,
       });
+      console.log('initialtrans===>', data);
 
       return await this.transactionRepo.save(transaction);
     }
@@ -153,6 +154,7 @@ export class TransactionService {
 
     const reference = transaction.transactionReference;
     const url = `${PAYSTACK_TRANSACTION_VERIFY_BASE_URL}/${reference}`;
+
     let response: AxiosResponse<PaystackVerifyTransactionResponseDto>;
 
     try {
@@ -184,6 +186,8 @@ export class TransactionService {
     }
 
     transaction.transactionStatus = transactionStatus;
+
+    console.log('verifytrans===>', response);
 
     return await this.transactionRepo.save(transaction);
   }
@@ -251,5 +255,11 @@ export class TransactionService {
 
   async findMany() {
     return this.transactionRepo.find();
+  }
+
+  async findByRefrence(refId: string) {
+    return await this.transactionRepo.findOne({
+      where: { transactionReference: refId },
+    });
   }
 }

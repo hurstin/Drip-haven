@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -74,7 +75,6 @@ export class BookingService {
       where: { id: bookingId },
       relations: ['service', 'service.washer.user'],
     });
-    console.log('booking=>', booking);
     if (!booking) throw new NotFoundException('booking not found');
 
     // Add null check for washer first
@@ -149,13 +149,51 @@ export class BookingService {
         userId,
         booking.service.id,
       );
-      booking.status = 'paid';
+
+      if (!transaction) return null;
+
+      console.log('transref===>', transaction.transactionReference);
+
+      booking.paymentReference = transaction.transactionReference;
       await this.bookingRepo.save(booking);
 
-      return {
-        transaction,
-      };
+      // const findTrans = await this.transactionService.findByRefrence(
+      //   transaction.transactionReference,
+      // );
+      return { transaction, booking };
     }
+  }
+
+  async verifyPayment(ref: string) {
+    const booking = await this.bookingRepo.findOne({
+      where: { paymentReference: ref },
+    });
+
+    if (!booking) throw new NotFoundException('booking not found');
+
+    const transaction = await this.transactionService.findByRefrence(ref);
+
+    if (!transaction) throw new NotFoundException('transaction not found');
+
+    // check if transaction is successfull
+    if (
+      transaction.transactionStatus === 'success' &&
+      transaction.status === 'paid'
+    ) {
+      booking.paymentStatus = 'authorized';
+      booking.status = 'paid';
+
+      await this.bookingRepo.save(booking);
+    } else {
+      throw new UnauthorizedException(
+        'error popped up,still fixing error messages',
+      );
+    }
+
+    return {
+      booking,
+      transaction,
+    };
   }
 
   // src/booking/booking.service.ts
@@ -200,6 +238,7 @@ export class BookingService {
         status: true,
         paymentStatus: true,
         washerResponse: true,
+        paymentReference: true,
         user: {
           name: true,
         },

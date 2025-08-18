@@ -62,6 +62,7 @@ export type Data = {
 };
 
 export class PaystackCallbackDto {
+  trxref: string;
   reference: string;
 }
 
