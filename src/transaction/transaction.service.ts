@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -40,7 +46,7 @@ export class TransactionService {
     userId: number,
     dto: any,
     // dto: InitializeTransactionDto,
-  ): Promise<Transaction | null> {
+  ): Promise<Transaction> {
     const service = await this.serviceService.getService(dto.serviceId);
 
     // const service = {
@@ -118,9 +124,47 @@ export class TransactionService {
 
       result = response.data;
     } catch (error) {
-      // handle case
+      // Handle Paystack API errors
       console.error('Paystack API error:', error);
-      return null;
+
+      if (axios.isAxiosError(error)) {
+        // Handle Axios-specific errors
+        if (error.response) {
+          // Server responded with error status
+          const status = error.response.status;
+          const message =
+            error.response.data?.message || 'Payment initialization failed';
+
+          if (status === 401) {
+            throw new UnauthorizedException('Invalid Paystack API key');
+          } else if (status === 400) {
+            throw new BadRequestException(`Paystack API error: ${message}`);
+          } else if (status >= 500) {
+            throw new InternalServerErrorException(
+              'Paystack service temporarily unavailable',
+            );
+          } else {
+            throw new BadRequestException(
+              `Payment initialization failed: ${message}`,
+            );
+          }
+        } else if (error.request) {
+          // Request was made but no response received
+          throw new InternalServerErrorException(
+            'No response from payment service',
+          );
+        } else {
+          // Something else happened while setting up the request
+          throw new InternalServerErrorException(
+            'Payment service configuration error',
+          );
+        }
+      } else {
+        // Handle non-Axios errors
+        throw new InternalServerErrorException(
+          'Unexpected error during payment initialization',
+        );
+      }
     }
 
     const data = result.data;
@@ -129,14 +173,17 @@ export class TransactionService {
       const transaction = this.transactionRepo.create({
         transactionReference: data.reference,
         paymentLink: data.authorization_url,
+        amount: data.amount,
+        transactionDate: data.transaction_date,
         serviceId: service.id,
       });
-      console.log('initialtrans===>', data);
 
       return await this.transactionRepo.save(transaction);
     }
 
-    return null;
+    // Handle unsuccessful Paystack response
+    const errorMessage = result.message || 'Payment initialization failed';
+    throw new BadRequestException(`Paystack error: ${errorMessage}`);
   }
 
   async verifyTransaction(
@@ -149,7 +196,7 @@ export class TransactionService {
     });
 
     if (!transaction) {
-      return null;
+      throw new NotFoundException('transaction not found');
     }
 
     const reference = transaction.transactionReference;
@@ -166,12 +213,32 @@ export class TransactionService {
         },
       });
     } catch (error) {
-      // handle case
+      // Handle Paystack verification errors
+      console.error('Paystack verification error:', error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          const status = error.response.status;
+          if (status === 401) {
+            console.error('Invalid Paystack API key during verification');
+          } else if (status >= 500) {
+            console.error(
+              'Paystack service temporarily unavailable during verification',
+            );
+          } else {
+            console.error(`Paystack verification failed with status ${status}`);
+          }
+        } else if (error.request) {
+          console.error('No response from Paystack during verification');
+        }
+      }
+
+      // Return null to indicate verification failed
       return null;
     }
 
     if (!response) {
-      return null;
+      throw new NotFoundException('no response');
     }
 
     const result = response.data;
@@ -180,7 +247,7 @@ export class TransactionService {
     const paymentConfirmed = transactionStatus === PAYSTACK_SUCCESS_STATUS;
 
     if (paymentConfirmed) {
-      transaction.status = PaymentStatus.pain;
+      transaction.status = PaymentStatus.paid;
     } else {
       transaction.status = PaymentStatus.notPaid;
     }
@@ -222,7 +289,9 @@ export class TransactionService {
         !!signature &&
         timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
     } catch (error) {
-      // handle case
+      // Handle webhook signature verification errors
+      console.error('Webhook signature verification error:', error);
+      return false;
     }
 
     if (!isValidEvent) {
@@ -241,7 +310,7 @@ export class TransactionService {
     const paymentConfirmed = transactionStatus === PAYSTACK_SUCCESS_STATUS;
 
     if (paymentConfirmed) {
-      transaction.status = PaymentStatus.pain;
+      transaction.status = PaymentStatus.paid;
     } else {
       transaction.status = PaymentStatus.notPaid;
     }

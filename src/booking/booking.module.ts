@@ -6,6 +6,8 @@ import { Booking } from './entities/booking.entity';
 import { CarModule } from 'src/car/car.module';
 import { ServiceMenuModule } from 'src/service-menu/service-menu.module';
 import { TransactionModule } from 'src/transaction/transaction.module';
+import { UserModule } from 'src/user/user.module';
+import { WasherModule } from 'src/washer/washer.module';
 
 @Module({
   imports: [
@@ -13,6 +15,8 @@ import { TransactionModule } from 'src/transaction/transaction.module';
     CarModule,
     ServiceMenuModule,
     TransactionModule,
+    UserModule,
+    WasherModule,
   ],
   controllers: [BookingController],
   providers: [BookingService],

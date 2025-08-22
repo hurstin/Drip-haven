@@ -4,15 +4,18 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Booking, WasherResponse } from './entities/booking.entity';
-import { In, Repository } from 'typeorm';
+import { In, Repository, Between, Like } from 'typeorm';
 import { CarService } from 'src/car/car.service';
 import { ServiceMenuService } from 'src/service-menu/service-menu.service';
 import { TransactionService } from 'src/transaction/transaction.service';
+import { UserService } from 'src/user/user.service';
+import { WasherService } from 'src/washer/washer.service';
 
 @Injectable()
 export class BookingService {
@@ -21,6 +24,8 @@ export class BookingService {
     private carService: CarService,
     private serviceRepo: ServiceMenuService,
     private transactionService: TransactionService,
+    private userService: UserService,
+    private washerService: WasherService,
   ) {}
 
   // create booking with user-selected washer
@@ -150,9 +155,7 @@ export class BookingService {
         booking.service.id,
       );
 
-      if (!transaction) return null;
-
-      console.log('transref===>', transaction.transactionReference);
+      if (!transaction) throw new NotFoundException('Transaction not found!');
 
       booking.paymentReference = transaction.transactionReference;
       await this.bookingRepo.save(booking);
@@ -160,7 +163,7 @@ export class BookingService {
       // const findTrans = await this.transactionService.findByRefrence(
       //   transaction.transactionReference,
       // );
-      return { transaction, booking };
+      return { booking };
     }
   }
 
@@ -192,7 +195,6 @@ export class BookingService {
 
     return {
       booking,
-      transaction,
     };
   }
 
@@ -282,4 +284,665 @@ export class BookingService {
       bookings,
     };
   }
+
+  // Get washer's bookings with filtering and pagination
+  async getWasherBookings(
+    washerUserId: number,
+    options: {
+      status?: string;
+      page?: number;
+      limit?: number;
+    },
+  ) {
+    const { status, page = 1, limit = 10 } = options;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.bookingRepo
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.service', 'service')
+      .leftJoinAndSelect('service.washer', 'washer')
+      .leftJoinAndSelect('washer.user', 'washerUser')
+      .leftJoinAndSelect('booking.user', 'user')
+      .leftJoinAndSelect('booking.car', 'car')
+      .where('washerUser.id = :washerUserId', { washerUserId });
+
+    if (status) {
+      queryBuilder.andWhere('booking.status = :status', { status });
+    }
+
+    const [bookings, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .orderBy('booking.scheduledTime', 'DESC')
+      .getManyAndCount();
+
+    return {
+      bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // Get single booking by ID with proper authorization
+  async getBookingById(bookingId: number, user: any) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      relations: [
+        'user',
+        'car',
+        'service',
+        'service.washer',
+        'service.washer.user',
+      ],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    // Check if user has access to this booking
+    if (user.role === 'user' && booking.user.id !== user.userId) {
+      throw new ForbiddenException('Access denied to this booking');
+    }
+
+    if (
+      user.role === 'washer' &&
+      (!booking.service.washer ||
+        booking.service.washer.user.id !== user.userId)
+    ) {
+      throw new ForbiddenException('Access denied to this booking');
+    }
+
+    return { booking };
+  }
+
+  // Get booking statistics for admin
+  async getBookingStats(options: { startDate?: Date; endDate?: Date }) {
+    const { startDate, endDate } = options;
+
+    let whereClause = {};
+    if (startDate && endDate) {
+      whereClause = {
+        scheduledTime: Between(startDate, endDate),
+      };
+    }
+
+    const [
+      totalBookings,
+      pendingBookings,
+      completedBookings,
+      cancelledBookings,
+    ] = await Promise.all([
+      this.bookingRepo.count({ where: whereClause }),
+      this.bookingRepo.count({
+        where: { ...whereClause, status: 'pending' },
+      }),
+      this.bookingRepo.count({
+        where: { ...whereClause, status: 'completed' },
+      }),
+      this.bookingRepo.count({
+        where: { ...whereClause, status: 'cancelled' },
+      }),
+    ]);
+
+    // Get revenue data
+    const revenueData = await this.bookingRepo
+      .createQueryBuilder('booking')
+      .leftJoin('booking.service', 'service')
+      .select('SUM(service.price)', 'totalRevenue')
+      .where('booking.status = :status', { status: 'completed' })
+      .andWhere(
+        startDate && endDate
+          ? 'booking.scheduledTime BETWEEN :startDate AND :endDate'
+          : '1=1',
+        {
+          startDate,
+          endDate,
+        },
+      )
+      .getRawOne();
+
+    return {
+      overview: {
+        totalBookings,
+        pendingBookings,
+        completedBookings,
+        cancelledBookings,
+        completionRate:
+          totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0,
+      },
+      revenue: {
+        totalRevenue: parseFloat(revenueData?.totalRevenue || '0'),
+        averageRevenue:
+          completedBookings > 0
+            ? parseFloat(revenueData?.totalRevenue || '0') / completedBookings
+            : 0,
+      },
+      period: {
+        startDate,
+        endDate,
+      },
+    };
+  }
+
+  // Search and filter bookings
+  async searchBookings(options: {
+    status?: string;
+    paymentStatus?: string;
+    startDate?: Date;
+    endDate?: Date;
+    userId?: number;
+    washerId?: number;
+    page?: number;
+    limit?: number;
+  }) {
+    const {
+      status,
+      paymentStatus,
+      startDate,
+      endDate,
+      userId,
+      washerId,
+      page = 1,
+      limit = 10,
+    } = options;
+
+    const skip = (page - 1) * limit;
+    const queryBuilder = this.bookingRepo
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.user', 'user')
+      .leftJoinAndSelect('booking.car', 'car')
+      .leftJoinAndSelect('booking.service', 'service')
+      .leftJoinAndSelect('service.washer', 'washer')
+      .leftJoinAndSelect('washer.user', 'washerUser');
+
+    // Apply filters
+    if (status) {
+      queryBuilder.andWhere('booking.status = :status', { status });
+    }
+
+    if (paymentStatus) {
+      queryBuilder.andWhere('booking.paymentStatus = :paymentStatus', {
+        paymentStatus,
+      });
+    }
+
+    if (startDate && endDate) {
+      queryBuilder.andWhere(
+        'booking.scheduledTime BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      );
+    }
+
+    if (userId) {
+      queryBuilder.andWhere('user.id = :userId', { userId });
+    }
+
+    if (washerId) {
+      queryBuilder.andWhere('washer.id = :washerId', { washerId });
+    }
+
+    const [bookings, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .orderBy('booking.scheduledTime', 'DESC')
+      .getManyAndCount();
+
+    return {
+      bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      filters: {
+        status,
+        paymentStatus,
+        startDate,
+        endDate,
+        userId,
+        washerId,
+      },
+    };
+  }
+
+  // Assign washer to booking (admin function)
+  async assignWasher(bookingId: number, washerId: number) {
+    const [booking, washer] = await Promise.all([
+      this.bookingRepo.findOne({
+        where: { id: bookingId },
+        relations: ['service'],
+      }),
+      this.washerService.getWasherById(washerId),
+    ]);
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (!washer) {
+      throw new NotFoundException('Washer not found');
+    }
+
+    if (washer.kycStatus !== 'approved') {
+      throw new BadRequestException('Washer is not approved');
+    }
+
+    if (!washer.isAvailable) {
+      throw new BadRequestException('Washer is not available');
+    }
+
+    // Update the service to assign the washer
+    (booking.service as any).washer = washer;
+    await this.bookingRepo.save(booking);
+
+    return {
+      message: 'Washer assigned successfully',
+      booking,
+    };
+  }
+
+  // Get booking history with detailed information
+  async getBookingHistory(
+    userId: number,
+    options: {
+      status?: string;
+      page?: number;
+      limit?: number;
+    },
+  ) {
+    const { status, page = 1, limit = 10 } = options;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.bookingRepo
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.service', 'service')
+      .leftJoinAndSelect('service.washer', 'washer')
+      .leftJoinAndSelect('washer.user', 'washerUser')
+      .leftJoinAndSelect('booking.car', 'car')
+      .where('booking.user.id = :userId', { userId });
+
+    if (status) {
+      queryBuilder.andWhere('booking.status = :status', { status });
+    }
+
+    const [bookings, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .orderBy('booking.scheduledTime', 'DESC')
+      .getManyAndCount();
+
+    return {
+      bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // Get booking analytics for dashboard
+  async getBookingAnalytics(userId: number, userRole: string) {
+    if (userRole === 'user') {
+      return this.getUserBookingAnalytics(userId);
+    } else if (userRole === 'washer') {
+      return this.getWasherBookingAnalytics(userId);
+    } else if (userRole === 'admin') {
+      return this.getAdminBookingAnalytics();
+    }
+
+    throw new BadRequestException('Invalid user role');
+  }
+
+  private async getUserBookingAnalytics(userId: number) {
+    const [totalBookings, completedBookings, cancelledBookings] =
+      await Promise.all([
+        this.bookingRepo.count({ where: { user: { id: userId } } }),
+        this.bookingRepo.count({
+          where: { user: { id: userId }, status: 'completed' },
+        }),
+        this.bookingRepo.count({
+          where: { user: { id: userId }, status: 'cancelled' },
+        }),
+      ]);
+
+    return {
+      totalBookings,
+      completedBookings,
+      cancelledBookings,
+      completionRate:
+        totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0,
+      cancellationRate:
+        totalBookings > 0 ? (cancelledBookings / totalBookings) * 100 : 0,
+    };
+  }
+
+  private async getWasherBookingAnalytics(washerUserId: number) {
+    // Use query builder for complex relations
+    const totalBookings = await this.bookingRepo
+      .createQueryBuilder('booking')
+      .leftJoin('booking.service', 'service')
+      .leftJoin('service.washer', 'washer')
+      .leftJoin('washer.user', 'washerUser')
+      .where('washerUser.id = :washerUserId', { washerUserId })
+      .getCount();
+
+    const completedBookings = await this.bookingRepo
+      .createQueryBuilder('booking')
+      .leftJoin('booking.service', 'service')
+      .leftJoin('service.washer', 'washer')
+      .leftJoin('washer.user', 'washerUser')
+      .where('washerUser.id = :washerUserId', { washerUserId })
+      .andWhere('booking.status = :status', { status: 'completed' })
+      .getCount();
+
+    const acceptedBookings = await this.bookingRepo
+      .createQueryBuilder('booking')
+      .leftJoin('booking.service', 'service')
+      .leftJoin('service.washer', 'washer')
+      .leftJoin('washer.user', 'washerUser')
+      .where('washerUser.id = :washerUserId', { washerUserId })
+      .andWhere('booking.status = :status', { status: 'accepted' })
+      .getCount();
+
+    return {
+      totalBookings,
+      completedBookings,
+      acceptedBookings,
+      completionRate:
+        totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0,
+      acceptanceRate:
+        totalBookings > 0 ? (acceptedBookings / totalBookings) * 100 : 0,
+    };
+  }
+
+  private async getAdminBookingAnalytics() {
+    const [totalBookings, pendingBookings, completedBookings, revenue] =
+      await Promise.all([
+        this.bookingRepo.count(),
+        this.bookingRepo.count({ where: { status: 'pending' } }),
+        this.bookingRepo.count({ where: { status: 'completed' } }),
+        this.bookingRepo
+          .createQueryBuilder('booking')
+          .leftJoin('booking.service', 'service')
+          .select('SUM(service.price)', 'totalRevenue')
+          .where('booking.status = :status', { status: 'completed' })
+          .getRawOne(),
+      ]);
+
+    return {
+      totalBookings,
+      pendingBookings,
+      completedBookings,
+      totalRevenue: parseFloat(revenue?.totalRevenue || '0'),
+      completionRate:
+        totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0,
+    };
+  }
 }
+
+// // Update booking status (user-initiated)
+// async updateBookingStatus(
+//   bookingId: number,
+//   userId: number,
+//   updateStatusDto: { status: any; reason?: string },
+// ) {
+//   const booking = await this.bookingRepo.findOne({
+//     where: { id: bookingId },
+//     relations: ['user'],
+//   });
+
+//   if (!booking) {
+//     throw new NotFoundException('Booking not found');
+//   }
+
+//   if (booking.user.id !== userId) {
+//     throw new ForbiddenException('Not your booking');
+//   }
+
+//   // Validate status transition
+//   const allowedTransitions = {
+//     assigned: ['cancelled'],
+//     accepted: ['cancelled'],
+//     'in-progress': ['cancelled'],
+//   };
+
+//   if (!allowedTransitions[booking.status]?.includes(updateStatusDto.status)) {
+//     throw new BadRequestException(
+//       `Cannot change status from ${booking.status} to ${updateStatusDto.status}`,
+//     );
+//   }
+
+//   booking.status = updateStatusDto.status;
+//   await this.bookingRepo.save(booking);
+
+//   return {
+//     message: 'Booking status updated successfully',
+//     booking,
+//   };
+// }
+
+// // Reschedule booking
+// async rescheduleBooking(
+//   bookingId: number,
+//   userId: number,
+//   newScheduledTime: Date,
+// ) {
+//   const booking = await this.bookingRepo.findOne({
+//     where: { id: bookingId },
+//     relations: ['user'],
+//   });
+
+//   if (!booking) {
+//     throw new NotFoundException('Booking not found');
+//   }
+
+//   if (booking.user.id !== userId) {
+//     throw new ForbiddenException('Not your booking');
+//   }
+
+//   if (!['assigned', 'accepted'].includes(booking.status)) {
+//     throw new BadRequestException('Cannot reschedule booking at this stage');
+//   }
+
+//   // Check if new time is in the future
+//   if (newScheduledTime <= new Date()) {
+//     throw new BadRequestException('New scheduled time must be in the future');
+//   }
+
+//   // Check for conflicts with other bookings
+//   const conflictingBooking = await this.bookingRepo.findOne({
+//     where: {
+//       car: { id: booking.car.id },
+//       status: In(['assigned', 'accepted', 'in-progress']),
+//       id: bookingId,
+//     },
+//   });
+
+//   if (conflictingBooking) {
+//     throw new ConflictException('Car has conflicting booking at this time');
+//   }
+
+//   booking.scheduledTime = newScheduledTime;
+//   await this.bookingRepo.save(booking);
+
+//   return {
+//     message: 'Booking rescheduled successfully',
+//     booking,
+//   };
+// }
+
+// // Get available time slots for a specific date and service
+// async getAvailableSlots(options: {
+//   date: Date;
+//   serviceId: number;
+//   latitude: number;
+//   longitude: number;
+// }) {
+//   const { date, serviceId, latitude, longitude } = options;
+
+//   // Get the service to check washer availability
+//   const service = await this.serviceRepo.getService(serviceId);
+//   if (!service) {
+//     throw new NotFoundException('Service not found');
+//   }
+
+//   // Get all washers for this service within reasonable distance
+//   const washers = await this.washerService.findNearbyWashersWithServices(
+//     latitude,
+//     longitude,
+//     10, // 10km radius
+//   );
+
+//   // Generate time slots (9 AM to 6 PM, 1-hour intervals)
+//   const timeSlots: Array<{
+//     time: Date;
+//     available: boolean;
+//     availableWashers: number;
+//   }> = [];
+//   const startHour = 9;
+//   const endHour = 18;
+
+//   for (let hour = startHour; hour < endHour; hour++) {
+//     const slotTime = new Date(date);
+//     slotTime.setHours(hour, 0, 0, 0);
+
+//     // Check if slot is available (not too close to current time)
+//     if (slotTime > new Date(Date.now() + 2 * 60 * 60 * 1000)) {
+//       // 2 hours from now
+//       timeSlots.push({
+//         time: slotTime,
+//         available: true,
+//         availableWashers: washers.length,
+//       });
+//     }
+//   }
+
+//   return {
+//     date,
+//     serviceId,
+//     timeSlots,
+//     totalWashers: washers.length,
+//   };
+// }
+
+//  // Create dispute for booking
+//  async createDispute(
+//   bookingId: number,
+//   userId: number,
+//   disputeDto: { reason: string; description: string },
+// ) {
+//   const booking = await this.bookingRepo.findOne({
+//     where: { id: bookingId },
+//     relations: ['user', 'service', 'service.washer'],
+//   });
+
+//   if (!booking) {
+//     throw new NotFoundException('Booking not found');
+//   }
+
+//   // Check if user has access to this booking
+//   const user = await this.userService.findById(userId);
+//   if (!user) {
+//     throw new NotFoundException('User not found');
+//   }
+
+//   if (user.role === 'user' && booking.user.id !== userId) {
+//     throw new ForbiddenException('Not your booking');
+//   }
+
+//   if (
+//     user.role === 'washer' &&
+//     (!booking.service.washer || booking.service.washer.user.id !== userId)
+//   ) {
+//     throw new ForbiddenException('Not your booking');
+//   }
+
+//   // Update booking status to dispute
+//   (booking as any).status = 'dispute' as any;
+//   await this.bookingRepo.save(booking);
+
+//   // TODO: Create dispute record in separate dispute entity
+//   // For now, return the updated booking
+//   return {
+//     message: 'Dispute created successfully',
+//     booking,
+//     dispute: {
+//       reason: disputeDto.reason,
+//       description: disputeDto.description,
+//       createdBy: userId,
+//       createdAt: new Date(),
+//     },
+//   };
+// }
+
+// // Bulk assign washers to multiple bookings
+// async bulkAssignWashers(bookingIds: number[], washerId: number) {
+//   const washer = await this.washerService.getWasherById(washerId);
+//   if (!washer) {
+//     throw new NotFoundException('Washer not found');
+//   }
+
+//   if (washer.kycStatus !== 'approved') {
+//     throw new BadRequestException('Washer is not approved');
+//   }
+
+//   const results: Array<{
+//     bookingId: number;
+//     success: boolean;
+//     result: any;
+//   }> = [];
+//   const errors: Array<{
+//     bookingId: number;
+//     success: boolean;
+//     error: any;
+//   }> = [];
+
+//   for (const bookingId of bookingIds) {
+//     try {
+//       const result = await this.assignWasher(bookingId, washerId);
+//       results.push({ bookingId, success: true, result });
+//     } catch (error) {
+//       errors.push({ bookingId, success: false, error: error.message });
+//     }
+//   }
+
+//   return {
+//     message: `Bulk assignment completed. ${results.length} successful, ${errors.length} failed.`,
+//     results,
+//     errors,
+//     summary: {
+//       total: bookingIds.length,
+//       successful: results.length,
+//       failed: errors.length,
+//     },
+//   };
+// }
+
+// // Get upcoming bookings for a user
+// async getUpcomingBookings(userId: number) {
+//   const upcomingBookings = await this.bookingRepo.find({
+//     where: {
+//       user: { id: userId },
+//       status: In(['assigned', 'accepted', 'in-progress']),
+//       scheduledTime: Between(
+//         new Date(),
+//         new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//       ), // Next 7 days
+//     },
+//     relations: ['service', 'service.washer', 'car'],
+//     order: { scheduledTime: 'ASC' },
+//   });
+
+//   return {
+//     upcomingBookings,
+//     count: upcomingBookings.length,
+//   };
+// }

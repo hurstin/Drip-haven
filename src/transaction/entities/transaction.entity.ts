@@ -22,6 +22,12 @@ export class Transaction {
   @Column({ default: PaymentStatus.notPaid })
   status: PaymentStatus;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  transactionDate: Date;
+
+  @Column({ nullable: true })
+  amount: number;
+
   @Column()
   serviceId: number;
 }

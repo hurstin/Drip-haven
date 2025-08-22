@@ -21,7 +21,13 @@ export type PaystackMetadataCustomField = {
 export type PaystackCreateTransactionResponseDto = {
   status: boolean;
   message: string;
-  data: { authorization_url: string; access_code: string; reference: string };
+  data: {
+    authorization_url: string;
+    access_code: string;
+    reference: string;
+    amount: number;
+    transaction_date: Date;
+  };
 };
 
 export type PaystackVerifyTransactionResponseDto = {
@@ -67,6 +73,6 @@ export class PaystackCallbackDto {
 }
 
 export enum PaymentStatus {
-  pain = 'paid',
+  paid = 'paid',
   notPaid = 'not paid',
 }

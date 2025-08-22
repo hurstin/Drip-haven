@@ -164,6 +164,7 @@ export class WasherService {
       relations: ['user', 'services'], // Include user details and services
     });
 
+    // let minDist=Infinity
     const results: NearbyWasherResult[] = [];
 
     for (const washer of washers) {
