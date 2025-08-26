@@ -22,6 +22,10 @@ export class UserService {
     private mailerService: MailerService,
     private cloudinaryService: CloudinaryService,
   ) {}
+  // Helper: find all users by role
+  async findByRole(role: UserRole) {
+    return this.usersRepository.find({ where: { role } });
+  }
 
   async create(createUserDto: CreateUserDto, req: any) {
     const verificationToken = uuidv4();

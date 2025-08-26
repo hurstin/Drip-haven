@@ -23,6 +23,7 @@ import {
   PaystackWebhookDto,
 } from './dto/paystack.dto';
 import { ConfigService } from '@nestjs/config';
+import { NotificationService } from 'src/notification/notification.service';
 import {
   PAYSTACK_SUCCESS_STATUS,
   PAYSTACK_TRANSACTION_INI_URL,
@@ -40,6 +41,7 @@ export class TransactionService {
     private serviceService: ServiceMenuService,
     private userService: UserService,
     readonly configService: ConfigService,
+    private notificationService: NotificationService,
   ) {}
 
   async initializeTransaction(
@@ -177,8 +179,17 @@ export class TransactionService {
         transactionDate: data.transaction_date,
         serviceId: service.id,
       });
+      const saved = await this.transactionRepo.save(transaction);
 
-      return await this.transactionRepo.save(transaction);
+      // Notify user payment initialized
+      await this.notificationService.notifyUser(user.id, {
+        userId: user.id,
+        title: 'Payment initialized',
+        message:
+          'Your payment has been initialized. Complete the payment to proceed.',
+      } as any);
+
+      return saved;
     }
 
     // Handle unsuccessful Paystack response

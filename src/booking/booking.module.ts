@@ -8,6 +8,7 @@ import { ServiceMenuModule } from 'src/service-menu/service-menu.module';
 import { TransactionModule } from 'src/transaction/transaction.module';
 import { UserModule } from 'src/user/user.module';
 import { WasherModule } from 'src/washer/washer.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { WasherModule } from 'src/washer/washer.module';
     TransactionModule,
     UserModule,
     WasherModule,
+    NotificationModule,
   ],
   controllers: [BookingController],
   providers: [BookingService],

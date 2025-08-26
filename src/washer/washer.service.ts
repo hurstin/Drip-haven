@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Washer } from './entities/washer.entity';
 import { Repository } from 'typeorm';
 import { UserService } from 'src/user/user.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { UserRole } from 'src/user/entities/user.entity';
 import { getDistance } from 'src/utils/distance.util';
 
@@ -35,6 +36,7 @@ export class WasherService {
   constructor(
     @InjectRepository(Washer) private washerRepository: Repository<Washer>,
     private usersService: UserService,
+    private notificationService: NotificationService,
   ) {}
 
   // register a user as a washer
@@ -63,6 +65,12 @@ export class WasherService {
 
     // await this.usersService.updateMyProfile(userId, { role: UserRole.WASHER });
 
+    // Notify admins of a new washer registration awaiting review
+    await this.notificationService.notifyAdmins(
+      'New washer registration',
+      `User ${user.name} submitted KYC and is awaiting approval.`,
+    );
+
     return washer;
   }
 
@@ -83,6 +91,15 @@ export class WasherService {
       role: UserRole.WASHER,
     });
     await this.washerRepository.save(washer);
+
+    // Notify washer of approval
+    await this.notificationService.notifyUser(washer.user.id, {
+      // Minimal payload: title + message are required in service
+      userId: washer.user.id,
+      title: 'KYC Approved',
+      message:
+        'Your washer account has been approved. You can now accept jobs.',
+    } as any);
     return washer;
   }
 
@@ -101,7 +118,16 @@ export class WasherService {
     await this.usersService.updateMyProfile(washer.user.id, {
       role: UserRole.USER,
     });
-    return this.washerRepository.save(washer);
+    const saved = await this.washerRepository.save(washer);
+
+    // Notify washer of rejection
+    await this.notificationService.notifyUser(washer.user.id, {
+      userId: washer.user.id,
+      title: 'KYC Rejected',
+      message:
+        'Your washer verification was rejected. Please resubmit your documents.',
+    } as any);
+    return saved;
   }
 
   // get a washer by id

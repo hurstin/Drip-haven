@@ -10,5 +10,6 @@ import { firebaseAdminProvider } from './firebase-admin.provider';
   imports: [TypeOrmModule.forFeature([Notification]), UserModule],
   controllers: [NotificationController],
   providers: [NotificationService, firebaseAdminProvider],
+  exports: [NotificationService],
 })
 export class NotificationModule {}

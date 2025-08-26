@@ -24,6 +24,7 @@ import {
   ApiBody,
   ApiParam,
 } from '@nestjs/swagger';
+import { Roles } from 'src/auth/decorator/roles.decorator';
 
 @Controller('car')
 @ApiBearerAuth()
@@ -54,6 +55,7 @@ export class CarController {
   @ApiBadRequestResponse({
     description: 'Plate number already exists or invalid data',
   })
+  @Roles('user')
   async addCar(@Request() req: any, @Body() createCarDto: CreateCarDto) {
     return this.carService.addCar(req.user.userId, createCarDto);
   }
@@ -85,6 +87,7 @@ export class CarController {
   @ApiBadRequestResponse({
     description: 'No cars found for user',
   })
+  @Roles('user')
   getCars(@Request() req: any) {
     return this.carService.getCarsByUser(req.user.userId);
   }
@@ -120,6 +123,7 @@ export class CarController {
   @ApiBadRequestResponse({
     description: 'Car not found, plate number already exists, or invalid data',
   })
+  @Roles('user')
   updateCar(
     @Param('id') carId: number,
     @Request() req: any,
@@ -146,6 +150,7 @@ export class CarController {
   @ApiBadRequestResponse({
     description: 'Car not found or deletion failed',
   })
+  @Roles('user')
   deleteCar(@Param('id') carId: number, @Request() req: any) {
     return this.carService.deleteCar(carId, req.user.userId);
   }
@@ -199,6 +204,7 @@ export class CarController {
       },
     },
   })
+  @Roles('user')
   async uploadCarPicture(
     @Param('id') carId: number,
     @UploadedFile() file: Express.Multer.File,
@@ -237,6 +243,7 @@ export class CarController {
   @ApiBadRequestResponse({
     description: 'Car picture not found or removal failed',
   })
+  @Roles('user')
   async removeCarPicture(@Param('id') carId: number, @Request() req: any) {
     return this.carService.removeCarPicture(carId, req.user.userId);
   }

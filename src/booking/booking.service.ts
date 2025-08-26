@@ -16,6 +16,7 @@ import { ServiceMenuService } from 'src/service-menu/service-menu.service';
 import { TransactionService } from 'src/transaction/transaction.service';
 import { UserService } from 'src/user/user.service';
 import { WasherService } from 'src/washer/washer.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class BookingService {
@@ -26,6 +27,7 @@ export class BookingService {
     private transactionService: TransactionService,
     private userService: UserService,
     private washerService: WasherService,
+    private notificationService: NotificationService,
   ) {}
 
   // create booking with user-selected washer
@@ -70,8 +72,18 @@ export class BookingService {
       paymentStatus: 'none',
       washerResponse: undefined,
     });
-    // NOTE: notify washer
-    return await this.bookingRepo.save(booking);
+    const saved = await this.bookingRepo.save(booking);
+
+    // Notify washer of new booking
+    // Ensure service includes washer.user for userId (serviceRepo.getService loads washer)
+    if (service?.washer?.user?.id) {
+      await this.notificationService.notifyUser(service.washer.user.id, {
+        userId: service.washer.user.id,
+        title: 'New booking assigned',
+        message: `A new booking has been assigned for service: ${service.name}.`,
+      } as any);
+    }
+    return saved;
   }
 
   // washer accept booking
@@ -94,7 +106,17 @@ export class BookingService {
 
     booking.status = 'accepted';
     booking.washerResponse = WasherResponse.ACCEPTED;
-    return this.bookingRepo.save(booking);
+    const saved = await this.bookingRepo.save(booking);
+
+    // Notify user that washer accepted the booking
+    if (saved.user?.id) {
+      await this.notificationService.notifyUser(saved.user.id, {
+        userId: saved.user.id,
+        title: 'Booking accepted',
+        message: 'Your booking has been accepted by the washer.',
+      } as any);
+    }
+    return saved;
   }
 
   // washer declines booking(admin can reassign)
@@ -132,8 +154,16 @@ export class BookingService {
 
     if (booking.status === 'accepted') {
       booking.status = 'completed';
-      await this.bookingRepo.save(booking);
-      return { booking };
+      const saved = await this.bookingRepo.save(booking);
+      // Notify user booking completed
+      if (saved.user?.id) {
+        await this.notificationService.notifyUser(saved.user.id, {
+          userId: saved.user.id,
+          title: 'Booking completed',
+          message: 'Your car wash booking has been marked as completed.',
+        } as any);
+      }
+      return { booking: saved };
     }
     return { message: 'booking is not assigned or was cancelled' };
   }
@@ -217,16 +247,23 @@ export class BookingService {
     await this.bookingRepo.save(booking);
 
     // Notify washer (if assigned)
-    // if (booking.washer) {
-    //   await this.notificationService.notifyUser(booking.washer.user.id, {
-    //     title: 'Booking Cancelled',
-    //     message: `Booking for ${booking.car?.model ?? 'car'} on ${booking.scheduledTime} was cancelled by the user.`,
-    //     type: 'booking'
-    //   });
-    // }
+    if (booking.service.washer.user.id) {
+      await this.notificationService.notifyUser(
+        booking.service.washer.user.id,
+        {
+          userId: booking.service.washer.user.id,
+          title: 'Booking Cancelled',
+          message: `Booking for ${booking.car?.model ?? 'car'} on ${booking.scheduledTime} was cancelled by the user.`,
+          type: 'booking',
+        },
+      );
+    }
 
-    // Optionally: Notify admins
-    // await this.notificationService.notifyAdmins({ ... });
+    // Notify admins of cancellation (ops visibility)
+    await this.notificationService.notifyAdmins(
+      'Booking cancelled',
+      `User ${booking.user?.name ?? booking.user?.id} cancelled booking #${booking.id}.`,
+    );
 
     return booking;
   }

@@ -1,3 +1,4 @@
+// Root application module: wires modules, database, mailer, and global pipes
 import { Module, ValidationPipe } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -23,6 +24,7 @@ import { Notification } from './notification/entities/notification.entity';
 import { TransactionModule } from './transaction/transaction.module';
 import { Transaction } from './transaction/entities/transaction.entity';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -30,11 +32,19 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
     AuthModule,
     CarModule,
     WasherModule,
+    // Global rate limiting (e.g., 100 requests per 60 seconds per IP)
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 100,
+      },
+    ]),
     ConfigModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
 
       useFactory: (configService: ConfigService) => ({
+        // PostgreSQL connection settings
         type: 'postgres',
         host: configService.get('DB_HOST'),
         port: configService.get('DB_PORT'),
@@ -50,6 +60,7 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
           Notification,
           Transaction,
         ],
+        // Note: synchronize=true is convenient in dev, use migrations in prod
         synchronize: true,
       }),
       inject: [ConfigService],
@@ -58,6 +69,7 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
       imports: [ConfigModule],
 
       useFactory: (configService: ConfigService) => ({
+        // SMTP transport configuration
         transport: {
           host: configService.get('EMAIL_HOST'),
           port: configService.get('EMAIL_PORT'),
@@ -81,12 +93,18 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
     AppService,
     {
       provide: APP_PIPE,
+      // Global validation pipe for DTO validation and payload sanitization
       useValue: new ValidationPipe({
         transform: true, // Auto-transform payloads to DTO instances
         whitelist: true, // Remove non-whitelisted properties
         forbidNonWhitelisted: true, // Return 400 for unknown properties
         forbidUnknownValues: true, // Reject objects with unknown values
       }),
+    },
+    // Global rate limiting guard
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     CloudinaryService,
   ],

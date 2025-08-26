@@ -78,7 +78,6 @@ export class AuthController {
   @ApiOkResponse({ description: 'password updated successfully' })
   @ApiBadRequestResponse({ description: 'incorrect value' })
   updatePassword(@Request() req) {
-    console.log('update=>', req.user);
     // req.user is the user object returned by the Passport strategy
     return this.authService.updatePassword(req);
   }

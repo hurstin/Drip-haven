@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ServiceMenu } from './entities/service-menu.entity';
 import { Repository } from 'typeorm';
 import { WasherService } from 'src/washer/washer.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class ServiceMenuService {
@@ -17,6 +18,7 @@ export class ServiceMenuService {
     @InjectRepository(ServiceMenu)
     private serviceRepository: Repository<ServiceMenu>,
     private washerService: WasherService,
+    private notificationService: NotificationService,
   ) {}
 
   // create service
@@ -38,7 +40,15 @@ export class ServiceMenuService {
     // create service
     const service = this.serviceRepository.create(createServiceMenuDto);
     service.washer = washer;
-    return this.serviceRepository.save(service);
+    const saved = await this.serviceRepository.save(service);
+
+    // Inform admins of newly created service (for moderation/oversight)
+    await this.notificationService.notifyAdmins(
+      'New service created',
+      `Washer ${washer.user.name} created service: ${service.name} at ₦${service.price}.`,
+    );
+
+    return saved;
   }
 
   // list all my services
