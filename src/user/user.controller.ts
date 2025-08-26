@@ -7,10 +7,10 @@ import {
   Param,
   Delete,
   Request,
-  UseGuards,
   ClassSerializerInterceptor,
   UseInterceptors,
   HttpCode,
+  UploadedFile,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -21,7 +21,10 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor) // works with clas-transfomer in entity
@@ -59,9 +62,80 @@ export class UserController {
   @ApiOkResponse({ description: 'your profile deleted successfully' })
   @ApiBadRequestResponse({ description: 'unsuccessfully deletion' })
   @HttpCode(204)
-  deleteMe(@Request() req) {
+  deleteMe(@Request() req: any) {
     const { userId } = req.user;
     return this.userService.deleteProfile(userId);
+  }
+
+  @Post('profile-picture')
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Upload profile picture',
+    description:
+      'Upload a new profile picture for the authenticated user. Supports JPG, PNG, GIF formats up to 5MB.',
+  })
+  @ApiOkResponse({
+    description: 'Profile picture uploaded successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          example:
+            'https://res.cloudinary.com/example/image/upload/v123/profile.jpg',
+        },
+        publicId: { type: 'string', example: 'profile-pictures/abc123' },
+        width: { type: 'number', example: 400 },
+        height: { type: 'number', example: 400 },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid file format, file too large, or upload failed',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: 'Profile picture file (JPG, PNG, GIF)',
+        },
+      },
+    },
+  })
+  async uploadProfilePicture(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: any,
+  ) {
+    return this.userService.updateProfilePicture(req.user.userId, file);
+  }
+
+  @Delete('profile-picture')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Remove profile picture',
+    description:
+      'Remove the current profile picture for the authenticated user',
+  })
+  @ApiOkResponse({
+    description: 'Profile picture removed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        profilePictureUrl: { type: 'string', example: null },
+        profilePicturePublicId: { type: 'string', example: null },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'No profile picture found or removal failed',
+  })
+  async removeProfilePicture(@Request() req: any) {
+    return this.userService.removeProfilePicture(req.user.userId);
   }
 
   // @Patch('update-user')

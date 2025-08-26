@@ -22,6 +22,7 @@ import { NotificationModule } from './notification/notification.module';
 import { Notification } from './notification/entities/notification.entity';
 import { TransactionModule } from './transaction/transaction.module';
 import { Transaction } from './transaction/entities/transaction.entity';
+import { CloudinaryService } from './cloudinary/cloudinary.service';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { Transaction } from './transaction/entities/transaction.entity';
         forbidUnknownValues: true, // Reject objects with unknown values
       }),
     },
+    CloudinaryService,
   ],
 })
 export class AppModule {}

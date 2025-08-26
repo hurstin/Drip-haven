@@ -32,8 +32,8 @@ export class WasherController {
     return this.washerService.getWasherById(req.user.userId);
   }
 
-  // @Roles('admin')
   @Get('allWashers')
+  @Roles('admin')
   getAllWasher() {
     return this.washerService.getAllWasher();
   }

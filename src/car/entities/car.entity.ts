@@ -27,4 +27,10 @@ export class Car {
 
   @Column({ unique: true })
   plateNumber: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  pictureUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  picturePublicId: string | null;
 }

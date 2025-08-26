@@ -11,12 +11,14 @@ import { User } from 'src/user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Car } from './entities/car.entity';
 import { UserService } from 'src/user/user.service';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class CarService {
   constructor(
     @InjectRepository(Car) private carRepository: Repository<Car>,
     private userService: UserService,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async addCar(userId: number, createCarDto: CreateCarDto): Promise<Car> {
@@ -102,5 +104,49 @@ export class CarService {
 
     if (!car) throw new NotFoundException('Car not found');
     return this.carRepository.remove(car);
+  }
+
+  // Upload car picture
+  async uploadCarPicture(
+    carId: number,
+    userId: number,
+    file: Express.Multer.File,
+  ) {
+    const car = await this.getCar(carId, userId);
+
+    // Delete old picture if exists
+    if (car.picturePublicId) {
+      await this.cloudinaryService.deleteImage(car.picturePublicId);
+    }
+
+    // Upload new picture
+    const uploadResult = await this.cloudinaryService.uploadImage(
+      file,
+      'car-pictures',
+    );
+
+    // Update car with new picture details
+    car.pictureUrl = uploadResult.url;
+    car.picturePublicId = uploadResult.publicId;
+
+    return this.carRepository.save(car);
+  }
+
+  // Remove car picture
+  async removeCarPicture(carId: number, userId: number) {
+    const car = await this.getCar(carId, userId);
+
+    if (!car.picturePublicId) {
+      throw new NotFoundException('Car picture not found');
+    }
+
+    // Delete from Cloudinary
+    await this.cloudinaryService.deleteImage(car.picturePublicId);
+
+    // Update car profile
+    car.pictureUrl = null;
+    car.picturePublicId = null;
+
+    return this.carRepository.save(car);
   }
 }

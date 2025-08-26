@@ -44,6 +44,12 @@ export class User {
   @Exclude()
   password: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  profilePictureUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  profilePicturePublicId: string | null; // To store Cloudinary public ID for deletion
+
   @Column({ default: false })
   isVerified: boolean;
 

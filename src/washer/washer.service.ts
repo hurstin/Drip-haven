@@ -173,20 +173,32 @@ export class WasherService {
       const distance = getDistance(lat, lng, washer.latitude, washer.longitude);
 
       if (distance <= radiusKm) {
-        results.push({
-          washer: {
-            id: washer.id,
-            name: washer.user.name,
-            distance: parseFloat(distance.toFixed(2)),
-          },
-          services: washer.services.map((service) => ({
-            id: service.id,
-            name: service.name,
-            price: service.price,
-            description: service.description,
-          })),
-        });
+        // Filter for only active services
+        const activeServices = washer.services.filter(
+          (service) => service.isActive,
+        );
+
+        // Only include washer if they have at least one active service
+        if (activeServices.length > 0) {
+          results.push({
+            washer: {
+              id: washer.id,
+              name: washer.user.name,
+              distance: parseFloat(distance.toFixed(2)),
+            },
+            services: activeServices.map((service) => ({
+              id: service.id,
+              name: service.name,
+              price: service.price,
+              description: service.description,
+            })),
+          });
+        }
       }
+    }
+
+    if (!results || results.length < 1) {
+      throw new NotFoundException('no active washer around');
     }
 
     // Sort by distance (nearest first)

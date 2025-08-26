@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,12 +13,14 @@ import { v4 as uuidv4 } from 'uuid'; // npm install uuid
 import { addHours } from 'date-fns'; // npm i date-fns
 import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
     private mailerService: MailerService,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async create(createUserDto: CreateUserDto, req: any) {
@@ -373,5 +376,46 @@ export class UserService {
     const user = await this.usersRepository.findOneBy({ id: userId });
     if (!user) return;
     return user;
+  }
+
+  async updateProfilePicture(userId: number, file: Express.Multer.File) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Delete old profile picture if exists
+    if (user.profilePicturePublicId) {
+      await this.cloudinaryService.deleteImage(user.profilePicturePublicId);
+    }
+
+    // Upload new image
+    const uploadResult = await this.cloudinaryService.uploadImage(
+      file,
+      'profile-pictures',
+    );
+
+    // Update user profile
+    user.profilePictureUrl = uploadResult.url;
+    user.profilePicturePublicId = uploadResult.publicId;
+
+    return this.usersRepository.save(user);
+  }
+
+  async removeProfilePicture(userId: number) {
+    if (!userId) throw new NotFoundException('userId not found');
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user || !user.profilePicturePublicId) {
+      throw new NotFoundException('Profile picture not found');
+    }
+
+    // Delete from Cloudinary
+    await this.cloudinaryService.deleteImage(user.profilePicturePublicId);
+
+    // Update user profile
+    user.profilePictureUrl = null;
+    user.profilePicturePublicId = null;
+
+    return this.usersRepository.save(user);
   }
 }
