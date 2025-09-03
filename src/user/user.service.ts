@@ -48,7 +48,7 @@ export class UserService {
 
     const verificationURL = `${req.protocol}://${req.get(
       'host',
-    )}/auth/verify-email?token=${verificationToken}`;
+    )}/v1/auth/verify-email?token=${verificationToken}`;
 
     const html = `<!DOCTYPE html>
      <html lang="en">
@@ -198,7 +198,7 @@ export class UserService {
             </div>
 
             <div class="footer">
-                <p>&copy; 2025 YourAppName. All rights reserved.</p>
+                <p>&copy; 2025 Drip Haven. All rights reserved.</p>
                 <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">Contact Us</a></p>
                 <p class="small">
                     This email was sent to you as part of our account verification process.<br>
@@ -231,7 +231,7 @@ export class UserService {
     const { password, ...result } = savedUser;
     return {
       result,
-      message: 'use created. Please check your email to verify.',
+      message: 'user created. Please check your email to verify.',
     };
   }
 

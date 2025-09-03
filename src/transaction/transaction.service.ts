@@ -265,8 +265,6 @@ export class TransactionService {
 
     transaction.transactionStatus = transactionStatus;
 
-    console.log('verifytrans===>', response);
-
     return await this.transactionRepo.save(transaction);
   }
 

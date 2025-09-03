@@ -21,7 +21,7 @@ import {
 } from '@nestjs/swagger';
 
 // Handles push and in-app notification APIs
-@Controller('notification')
+@Controller('notifications')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 

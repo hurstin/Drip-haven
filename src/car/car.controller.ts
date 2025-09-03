@@ -26,7 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorator/roles.decorator';
 
-@Controller('car')
+@Controller('cars')
 @ApiBearerAuth()
 export class CarController {
   constructor(private readonly carService: CarService) {}

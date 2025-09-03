@@ -35,7 +35,7 @@ import {
 
 @ApiTags('Bookings')
 @ApiBearerAuth()
-@Controller('booking')
+@Controller('bookings')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
@@ -55,10 +55,10 @@ export class BookingController {
         summary: 'Basic booking',
         value: {
           carId: 1,
-          serviceId: 2,
-          scheduledTime: '2024-01-15T10:00:00Z',
-          latitude: 40.7128,
-          longitude: -74.006,
+          serviceId: 1,
+          scheduledTime: '2025-12-15T14:30:00Z',
+          latitude: 6.422526,
+          longitude: 5.595574,
         },
       },
     },
@@ -232,7 +232,7 @@ export class BookingController {
     schema: {
       example: {
         id: 1,
-        status: 'paid',
+        status: 'payment processing',
         message: 'Service approved and payment processed',
       },
     },
@@ -262,7 +262,7 @@ export class BookingController {
   @ApiQuery({
     name: 'payload',
     description: 'Payment verification payload',
-    example: 'eyJ0cmFuc2FjdGlvbklkIjoiMTIzNDU2Nzg5MCJ9',
+    example: 'wxi8emcmhx',
     type: 'string',
   })
   @ApiResponse({
@@ -272,8 +272,14 @@ export class BookingController {
       example: {
         message: 'Payment verified successfully',
         booking: {
-          id: 1,
-          paymentStatus: 'captured',
+          id: 9,
+          scheduledTime: '2025-12-15T14:30:00.000Z',
+          status: 'paid',
+          paymentStatus: 'authorized',
+          paymentReference: 'wxi8emcmhx',
+          latitude: 6.422526,
+          longitude: 5.595574,
+          washerResponse: 'accepted',
         },
       },
     },

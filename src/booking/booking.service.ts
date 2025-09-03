@@ -193,7 +193,7 @@ export class BookingService {
       // const findTrans = await this.transactionService.findByRefrence(
       //   transaction.transactionReference,
       // );
-      return { booking };
+      return { booking, transaction };
     }
   }
 

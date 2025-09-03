@@ -23,7 +23,7 @@ export class CreateBookingDto {
 
   @ApiProperty({
     description: 'ID of the car wash service to book',
-    example: 2,
+    example: 1,
     minimum: 1,
     type: 'integer',
   })
@@ -35,7 +35,7 @@ export class CreateBookingDto {
   @ApiProperty({
     description:
       'Scheduled date and time for the car wash service (ISO 8601 format)',
-    example: '2024-01-15T10:00:00Z',
+    example: '2025-12-15T14:30:00Z',
     type: 'string',
     format: 'date-time',
   })
@@ -45,7 +45,7 @@ export class CreateBookingDto {
 
   @ApiProperty({
     description: 'Latitude coordinate for the service location',
-    example: 40.7128,
+    example: 6.422526,
     minimum: -90,
     maximum: 90,
     type: 'number',
@@ -59,7 +59,7 @@ export class CreateBookingDto {
 
   @ApiProperty({
     description: 'Longitude coordinate for the service location',
-    example: -74.006,
+    example: 5.595574,
     minimum: -180,
     maximum: 180,
     type: 'number',
