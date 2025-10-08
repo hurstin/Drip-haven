@@ -9,8 +9,8 @@ import { UpdateServiceMenuDto } from './dto/update-service-menu.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ServiceMenu } from './entities/service-menu.entity';
 import { Repository } from 'typeorm';
-import { WasherService } from 'src/washer/washer.service';
-import { NotificationService } from 'src/notification/notification.service';
+import { WasherService } from '../washer/washer.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class ServiceMenuService {

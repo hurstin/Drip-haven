@@ -14,8 +14,8 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Public } from 'src/auth/decorator/public.decorator';
-import { Roles } from 'src/auth/decorator/roles.decorator';
+import { Public } from '../auth/decorator/public.decorator';
+import { Roles } from '../auth/decorator/roles.decorator';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,

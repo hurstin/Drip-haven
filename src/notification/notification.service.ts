@@ -4,10 +4,10 @@ import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MssgStatus, Notification } from './entities/notification.entity';
 import { Repository } from 'typeorm';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../user/user.service';
 import * as firebase from 'firebase-admin';
 import { sendNotificationDTO } from './dto/send-notification.dto';
-import { UserRole } from 'src/user/entities/user.entity';
+import { UserRole } from '../user/entities/user.entity';
 
 @Injectable()
 export class NotificationService {

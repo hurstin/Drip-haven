@@ -13,7 +13,7 @@ import {
 import { ServiceMenuService } from './service-menu.service';
 import { CreateServiceMenuDto } from './dto/create-service-menu.dto';
 import { UpdateServiceMenuDto } from './dto/update-service-menu.dto';
-import { Roles } from 'src/auth/decorator/roles.decorator';
+import { Roles } from '../auth/decorator/roles.decorator';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,

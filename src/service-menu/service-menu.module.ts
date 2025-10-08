@@ -3,8 +3,8 @@ import { ServiceMenuService } from './service-menu.service';
 import { ServiceMenuController } from './service-menu.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServiceMenu } from './entities/service-menu.entity';
-import { WasherModule } from 'src/washer/washer.module';
-import { NotificationModule } from 'src/notification/notification.module';
+import { WasherModule } from '../washer/washer.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [

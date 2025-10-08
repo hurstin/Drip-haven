@@ -25,7 +25,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { CreateUserResponsedto } from './dto/create-user-response.dto';
-import { Serialize } from 'src/interceptors/serialize.interceptor';
+// import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { loginDto } from './dto/login-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';

@@ -23,7 +23,7 @@ import {
   PaystackWebhookDto,
 } from './dto/paystack.dto';
 import { ConfigService } from '@nestjs/config';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationService } from '../notification/notification.service';
 import {
   PAYSTACK_SUCCESS_STATUS,
   PAYSTACK_TRANSACTION_INI_URL,

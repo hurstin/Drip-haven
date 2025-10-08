@@ -3,8 +3,8 @@ import { WasherService } from './washer.service';
 import { WasherController } from './washer.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Washer } from './entities/washer.entity';
-import { UserModule } from 'src/user/user.module';
-import { NotificationModule } from 'src/notification/notification.module';
+import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Washer]), UserModule, NotificationModule],

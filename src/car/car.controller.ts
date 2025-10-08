@@ -24,7 +24,7 @@ import {
   ApiBody,
   ApiParam,
 } from '@nestjs/swagger';
-import { Roles } from 'src/auth/decorator/roles.decorator';
+import { Roles } from '../auth/decorator/roles.decorator';
 
 @Controller('cars')
 @ApiBearerAuth()

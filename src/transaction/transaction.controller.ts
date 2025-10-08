@@ -19,7 +19,7 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { InitializeTransactionDto } from './dto/initialize-transaction.dto';
 import { PaystackCallbackDto, PaystackWebhookDto } from './dto/paystack.dto';
 import { PAYSTACK_WEBHOOK_SIGNATURE_KEY } from './constants';
-import { Public } from 'src/auth/decorator/public.decorator';
+import { Public } from '../auth/decorator/public.decorator';
 import {
   ApiBadRequestResponse,
   ApiBody,

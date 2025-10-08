@@ -9,10 +9,10 @@ import { UpdateWasherDto } from './dto/update-washer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Washer } from './entities/washer.entity';
 import { Repository } from 'typeorm';
-import { UserService } from 'src/user/user.service';
-import { NotificationService } from 'src/notification/notification.service';
-import { UserRole } from 'src/user/entities/user.entity';
-import { getDistance } from 'src/utils/distance.util';
+import { UserService } from '../user/user.service';
+import { NotificationService } from '../notification/notification.service';
+import { UserRole } from '../user/entities/user.entity';
+import { getDistance } from '../utils/distance.util';
 
 // Define a type for the result structure
 type NearbyWasherResult = {

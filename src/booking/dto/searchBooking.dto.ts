@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { PaymentStatus } from 'src/transaction/dto/paystack.dto';
+import { PaymentStatus } from '../../transaction/dto/paystack.dto';
 
 export class SearchBookingsDto {
   @ApiProperty({

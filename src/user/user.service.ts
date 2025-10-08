@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid'; // npm install uuid
 import { addHours } from 'date-fns'; // npm i date-fns
 import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class UserService {

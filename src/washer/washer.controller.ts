@@ -14,8 +14,8 @@ import {
 import { WasherService } from './washer.service';
 import { CreateWasherDto } from './dto/create-washer.dto';
 import { UpdateWasherDto } from './dto/update-washer.dto';
-import { RolesGuard } from 'src/auth/guards/role.guard';
-import { Roles } from 'src/auth/decorator/roles.decorator';
+import { RolesGuard } from '../auth/guards/role.guard';
+import { Roles } from '../auth/decorator/roles.decorator';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,

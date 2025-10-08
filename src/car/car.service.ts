@@ -7,11 +7,11 @@ import {
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/user/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Car } from './entities/car.entity';
-import { UserService } from 'src/user/user.service';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { UserService } from '../user/user.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class CarService {

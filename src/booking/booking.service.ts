@@ -11,12 +11,12 @@ import { UpdateBookingDto } from './dto/update-booking.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Booking, WasherResponse } from './entities/booking.entity';
 import { In, Repository, Between, Like } from 'typeorm';
-import { CarService } from 'src/car/car.service';
-import { ServiceMenuService } from 'src/service-menu/service-menu.service';
-import { TransactionService } from 'src/transaction/transaction.service';
-import { UserService } from 'src/user/user.service';
-import { WasherService } from 'src/washer/washer.service';
-import { NotificationService } from 'src/notification/notification.service';
+import { CarService } from '../car/car.service';
+import { ServiceMenuService } from '../service-menu/service-menu.service';
+import { TransactionService } from '../transaction/transaction.service';
+import { UserService } from '../user/user.service';
+import { WasherService } from '../washer/washer.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class BookingService {
