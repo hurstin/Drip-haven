@@ -11,8 +11,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from './entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { InitializeTransactionDto } from './dto/initialize-transaction.dto';
-import { ServiceMenuService } from 'src/service-menu/service-menu.service';
-import { UserService } from 'src/user/user.service';
+import { ServiceMenuService } from '../service-menu/service-menu.service';
+import { UserService } from '../user/user.service';
 import {
   PaymentStatus,
   PaystackCallbackDto,

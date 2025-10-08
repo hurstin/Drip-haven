@@ -7,7 +7,7 @@ import { CarModule } from '../car/car.module';
 import { ServiceMenuModule } from '../service-menu/service-menu.module';
 import { TransactionModule } from '../transaction/transaction.module';
 import { UserModule } from '../user/user.module';
-import { WasherModule } from 'src/washer/washer.module';
+import { WasherModule } from '../washer/washer.module';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
