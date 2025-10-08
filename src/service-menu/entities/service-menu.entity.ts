@@ -1,5 +1,5 @@
-import { Booking } from 'src/booking/entities/booking.entity';
-import { Washer } from 'src/washer/entities/washer.entity';
+import { Booking } from '../../booking/entities/booking.entity';
+import { Washer } from '../../washer/entities/washer.entity';
 import {
   Column,
   Entity,

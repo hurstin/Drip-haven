@@ -10,8 +10,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Washer } from '../../washer/entities/washer.entity';
-import { Booking } from 'src/booking/entities/booking.entity';
-import { Notification } from 'src/notification/entities/notification.entity';
+import { Booking } from '../../booking/entities/booking.entity';
+import { Notification } from '../../notification/entities/notification.entity';
 
 export enum UserRole {
   USER = 'user',

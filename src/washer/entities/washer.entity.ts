@@ -1,6 +1,6 @@
-import { Booking } from 'src/booking/entities/booking.entity';
-import { ServiceMenu } from 'src/service-menu/entities/service-menu.entity';
-import { User } from 'src/user/entities/user.entity';
+import { Booking } from '../../booking/entities/booking.entity';
+import { ServiceMenu } from '../../service-menu/entities/service-menu.entity';
+import { User } from '../../user/entities/user.entity';
 import {
   Column,
   Entity,

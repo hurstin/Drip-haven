@@ -1,7 +1,7 @@
-import { Car } from 'src/car/entities/car.entity';
-import { ServiceMenu } from 'src/service-menu/entities/service-menu.entity';
-import { User } from 'src/user/entities/user.entity';
-import { Washer } from 'src/washer/entities/washer.entity';
+import { Car } from '../../car/entities/car.entity';
+import { ServiceMenu } from '../../service-menu/entities/service-menu.entity';
+import { User } from '../../user/entities/user.entity';
+import { Washer } from '../../washer/entities/washer.entity';
 import {
   Column,
   CreateDateColumn,

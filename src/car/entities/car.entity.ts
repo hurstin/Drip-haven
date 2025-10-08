@@ -1,4 +1,4 @@
-import { Booking } from 'src/booking/entities/booking.entity';
+import { Booking } from '../../booking/entities/booking.entity';
 import { User } from '../../user/entities/user.entity';
 import {
   Column,
