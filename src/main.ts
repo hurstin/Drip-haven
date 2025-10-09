@@ -11,6 +11,18 @@ async function bootstrap() {
   // Security: HTTP headers hardening
   app.use(helmet());
 
+  // CORS: allow frontend to connect
+  // Set CORS_ORIGIN env var to a comma-separated list for explicit origins, e.g.:
+  // CORS_ORIGIN=http://localhost:5173,https://your-frontend.app
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+      : true,
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Authorization, Accept, X-Requested-With',
+  });
+
   // API versioning: use URI strategy, e.g., /v1/... endpoints
   app.enableVersioning({
     type: VersioningType.URI,
