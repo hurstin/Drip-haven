@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '../../user/entities/user.entity';
-
+import { Match } from '../decorator/match.decorator';
 export class CreateUserDto {
   @ApiProperty({ description: 'Name of user' })
   @IsString()
@@ -31,6 +31,8 @@ export class CreateUserDto {
 
   @ApiProperty({ description: 'password confirm' })
   @IsNotEmpty()
-  @Equals('password', { message: 'Password and confirm password do not match' })
+  @Match('password', { message: 'Password and confirm password do not match' })
   passwordConfirm: string;
+  // @Equals('password', { message: 'Password and confirm password do not match' })
+  // passwordConfirm: string;
 }
