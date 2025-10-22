@@ -12,6 +12,7 @@ import {
 import { Washer } from '../../washer/entities/washer.entity';
 import { Booking } from '../../booking/entities/booking.entity';
 import { Notification } from '../../notification/entities/notification.entity';
+import { Review } from '../../review/entities/review.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -95,4 +96,7 @@ export class User {
 
   @OneToMany(() => Notification, (notification) => notification.user)
   notification: Notification[];
+
+  @OneToMany(() => Review, (review) => review.user)
+  reviews: Review[];
 }

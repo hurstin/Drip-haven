@@ -2,11 +2,13 @@ import { Car } from '../../car/entities/car.entity';
 import { ServiceMenu } from '../../service-menu/entities/service-menu.entity';
 import { User } from '../../user/entities/user.entity';
 import { Washer } from '../../washer/entities/washer.entity';
+import { Review } from '../../review/entities/review.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -74,4 +76,7 @@ export class Booking {
 
   @Column({ default: null, enum: WasherResponse, nullable: true })
   washerResponse: WasherResponse;
+
+  @OneToOne(() => Review, (review) => review.booking)
+  review: Review;
 }

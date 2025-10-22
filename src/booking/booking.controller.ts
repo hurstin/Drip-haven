@@ -710,6 +710,50 @@ export class BookingController {
   async getBookingById(@Param('id') bookingId: string, @Req() req: any) {
     return this.bookingService.getBookingById(+bookingId, req.user);
   }
+
+  @Get(':id/can-review')
+  @ApiOperation({
+    summary: 'Check if booking can be reviewed',
+    description:
+      'Check if the current user can create a review for the specified booking.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Booking ID',
+    example: 1,
+    type: 'integer',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns whether user can review the booking',
+    schema: {
+      example: {
+        canReview: true,
+        reason: 'Booking is completed and paid, no review exists yet',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Booking not found',
+  })
+  @Roles('user')
+  async canReviewBooking(
+    @Param('id') bookingId: string,
+    @Req() req: any,
+  ): Promise<{ canReview: boolean; reason?: string }> {
+    const canReview = await this.bookingService.canUserReviewBooking(
+      req.user.userId,
+      +bookingId,
+    );
+
+    return {
+      canReview,
+      reason: canReview
+        ? 'You can review this booking'
+        : 'You cannot review this booking (may be incomplete, unpaid, or already reviewed)',
+    };
+  }
 }
 
 // // Update booking status (user-initiated)

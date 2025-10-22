@@ -23,6 +23,8 @@ import { NotificationModule } from './notification/notification.module';
 import { Notification } from './notification/entities/notification.entity';
 import { TransactionModule } from './transaction/transaction.module';
 import { Transaction } from './transaction/entities/transaction.entity';
+import { ReviewModule } from './review/review.module';
+import { Review } from './review/entities/review.entity';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
@@ -59,6 +61,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
           Booking,
           Notification,
           Transaction,
+          Review,
         ],
         // Note: synchronize=true is convenient in dev, use migrations in prod
         synchronize: true,
@@ -87,6 +90,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     BookingModule,
     NotificationModule,
     TransactionModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [

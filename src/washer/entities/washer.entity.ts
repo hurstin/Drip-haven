@@ -1,6 +1,7 @@
 import { Booking } from '../../booking/entities/booking.entity';
 import { ServiceMenu } from '../../service-menu/entities/service-menu.entity';
 import { User } from '../../user/entities/user.entity';
+import { Review } from '../../review/entities/review.entity';
 import {
   Column,
   Entity,
@@ -39,4 +40,13 @@ export class Washer {
 
   @Column({ default: true })
   isAvailable: boolean;
+
+  @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
+  averageRating: number;
+
+  @Column({ type: 'int', default: 0 })
+  totalReviews: number;
+
+  @OneToMany(() => Review, (review) => review.washer)
+  reviews: Review[];
 }

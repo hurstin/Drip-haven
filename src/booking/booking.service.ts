@@ -700,6 +700,40 @@ export class BookingService {
     };
   }
 
+  async canUserReviewBooking(
+    userId: number,
+    bookingId: number,
+  ): Promise<boolean> {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      relations: ['user', 'review'],
+    });
+
+    if (!booking) {
+      return false;
+    }
+
+    // Check if booking belongs to user
+    if (booking.user.id !== userId) {
+      return false;
+    }
+
+    // Check if booking is completed and paid
+    if (
+      booking.status !== 'completed' ||
+      booking.paymentStatus !== 'authorized'
+    ) {
+      return false;
+    }
+
+    // Check if review already exists
+    if (booking.review) {
+      return false;
+    }
+
+    return true;
+  }
+
   private async getAdminBookingAnalytics() {
     const [totalBookings, pendingBookings, completedBookings, revenue] =
       await Promise.all([
