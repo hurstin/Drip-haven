@@ -143,12 +143,21 @@ export class WasherService {
 
   // get all washer
   async getAllWasher() {
-    const washer = await this.washerRepository.find({
-      relations: ['services'],
+    const washers = await this.washerRepository.find({
+      relations: ['services', 'user'],
     });
 
-    if (!washer || washer.length === 0)
+    if (!washers || washers.length === 0)
       throw new NotFoundException('wahser not found');
+
+    // Map washers to include only user.name and user.id
+    const washer = washers.map((w) => ({
+      ...w,
+      user: {
+        id: w.user.id,
+        name: w.user.name,
+      },
+    }));
 
     return {
       washer,
