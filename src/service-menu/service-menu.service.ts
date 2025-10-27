@@ -29,6 +29,7 @@ export class ServiceMenuService {
     // check if washer exists
     const washer = await this.washerService.getWasherById(userId);
     if (!washer) throw new NotFoundException('Washer not found');
+    console.log('washer', washer);
 
     // check if service already exists
     const existingService = await this.serviceRepository.findOne({

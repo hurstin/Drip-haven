@@ -135,7 +135,7 @@ export class WasherService {
     // get washer by user id
     const washer = await this.washerRepository.findOne({
       where: { user: { id: userId } },
-      relations: ['services'],
+      relations: ['services', 'user'],
     });
     if (!washer) throw new NotFoundException('Washer not found');
     return washer;
