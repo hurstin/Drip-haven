@@ -148,6 +148,22 @@ export class ServiceMenuService {
     // Efficient deletion using ID instead of full entity
     return this.serviceRepository.delete(id);
   }
+
+  // set active status (activate/deactivate) for a service
+  async setActiveStatus(id: number, userId: number, isActive: boolean) {
+    const service = await this.serviceRepository.findOne({
+      where: { id },
+      relations: ['washer.user'],
+    });
+
+    if (!service) throw new NotFoundException('Service not found');
+
+    const ownerId = service.washer?.user?.id;
+    if (ownerId !== userId) throw new ForbiddenException();
+
+    service.isActive = isActive;
+    return this.serviceRepository.save(service);
+  }
 }
 
 // async updateService(

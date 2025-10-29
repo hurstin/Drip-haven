@@ -13,6 +13,7 @@ import {
 import { ServiceMenuService } from './service-menu.service';
 import { CreateServiceMenuDto } from './dto/create-service-menu.dto';
 import { UpdateServiceMenuDto } from './dto/update-service-menu.dto';
+import { SetServiceActiveDto } from './dto/set-service-active.dto';
 import { Roles } from '../auth/decorator/roles.decorator';
 import {
   ApiBadRequestResponse,
@@ -118,5 +119,30 @@ export class ServiceMenuController {
   @ApiBadRequestResponse({ description: 'Forbidden or not found' })
   deleteService(@Param('id') id: number, @Req() req: any) {
     return this.serviceMenuService.deleteService(id, req.user.userId);
+  }
+
+  @Patch(':id/active')
+  @Roles('washer')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Set service active status (Washer)' })
+  @ApiParam({
+    name: 'id',
+    type: 'number',
+    example: 1,
+    description: 'Service ID',
+  })
+  @ApiBody({ type: SetServiceActiveDto })
+  @ApiOkResponse({ description: 'Service status updated successfully' })
+  @ApiBadRequestResponse({ description: 'Forbidden or not found' })
+  setActiveStatus(
+    @Param('id') id: number,
+    @Req() req: any,
+    @Body() body: SetServiceActiveDto,
+  ) {
+    return this.serviceMenuService.setActiveStatus(
+      id,
+      req.user.userId,
+      body.isActive,
+    );
   }
 }
