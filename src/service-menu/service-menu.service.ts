@@ -67,7 +67,7 @@ export class ServiceMenuService {
     const service = await this.serviceRepository.findOne({
       where: {
         id: serviceId,
-        isActive: false,
+        isActive: true,
       },
       relations: ['washer'],
     });
