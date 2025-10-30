@@ -164,6 +164,27 @@ export class ServiceMenuService {
     service.isActive = isActive;
     return this.serviceRepository.save(service);
   }
+
+  // list all active services
+  async listAllActiveServices() {
+    const services = await this.serviceRepository.find({
+      where: { isActive: true },
+      relations: ['washer', 'washer.user'],
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        isActive: true,
+        washer: {
+          id: true,
+          user: {
+            name: true,
+          },
+        },
+      },
+    });
+    return services;
+  }
 }
 
 // async updateService(

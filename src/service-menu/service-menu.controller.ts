@@ -56,6 +56,13 @@ export class ServiceMenuController {
     return this.serviceMenuService.listAllServices();
   }
 
+  @Get('active')
+  @ApiOperation({ summary: 'List all active services' })
+  @ApiOkResponse({ description: 'Active services retrieved successfully' })
+  listAllActiveServices() {
+    return this.serviceMenuService.listAllActiveServices();
+  }
+
   @Get()
   @Roles('washer')
   @ApiBearerAuth()
