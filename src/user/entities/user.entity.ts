@@ -60,6 +60,12 @@ export class User {
   @Column({ type: 'varchar', nullable: true, length: 255 })
   address: string | null;
 
+  @Column({ type: 'varchar', nullable: true, length: 30 })
+  accountNumber: string | null;
+
+  @Column({ type: 'varchar', nullable: true, length: 120 })
+  accountName: string | null;
+
   @Column({ type: 'varchar', nullable: true })
   emailVerificationToken: string | null;
 

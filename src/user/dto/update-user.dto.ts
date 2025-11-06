@@ -26,4 +26,14 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @ApiPropertyOptional({ description: 'Bank account number of user' })
+  @IsOptional()
+  @IsString()
+  accountNumber?: string;
+
+  @ApiPropertyOptional({ description: 'Bank account name of user' })
+  @IsOptional()
+  @IsString()
+  accountName?: string;
 }
