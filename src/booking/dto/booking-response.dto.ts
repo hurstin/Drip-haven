@@ -35,6 +35,13 @@ export class CarResponseDto {
     type: 'string',
   })
   plateNumber: string;
+
+  @ApiProperty({
+    description: 'Car type',
+    example: 'suv',
+    required: false,
+  })
+  type?: string;
 }
 
 export class ServiceResponseDto {
