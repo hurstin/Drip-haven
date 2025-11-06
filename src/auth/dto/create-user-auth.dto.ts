@@ -35,4 +35,14 @@ export class CreateUserDto {
   passwordConfirm: string;
   // @Equals('password', { message: 'Password and confirm password do not match' })
   // passwordConfirm: string;
+
+  @ApiPropertyOptional({ description: 'Phone number of user' })
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
+
+  @ApiPropertyOptional({ description: 'Address of user' })
+  @IsOptional()
+  @IsString()
+  address?: string;
 }
