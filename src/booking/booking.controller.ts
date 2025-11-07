@@ -359,7 +359,7 @@ export class BookingController {
     status: 404,
     description: 'No bookings found',
   })
-  @Roles('admin')
+  // @Roles('admin')
   getAllBoooking() {
     return this.bookingService.getAllBooking();
   }

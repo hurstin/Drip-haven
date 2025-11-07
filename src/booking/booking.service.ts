@@ -270,7 +270,7 @@ export class BookingService {
 
   async getAllBooking() {
     const bookings = await this.bookingRepo.find({
-      relations: ['user', 'service'],
+      relations: ['user', 'service', 'service.washer', 'service.washer.user'],
       select: {
         id: true,
         scheduledTime: true,
@@ -279,13 +279,25 @@ export class BookingService {
         washerResponse: true,
         paymentReference: true,
         user: {
+          id: true,
           name: true,
+          email: true,
         },
         service: {
           id: true,
           name: true,
+          price: true,
+          washer: {
+            id: true,
+            user: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       },
+      order: { scheduledTime: 'DESC' },
     });
 
     if (!bookings || bookings.length === 0)
