@@ -66,6 +66,25 @@ export class User {
   @Column({ type: 'varchar', nullable: true, length: 120 })
   accountName: string | null;
 
+  @Column({ type: 'enum', enum: ['nin', 'drivers_license'], nullable: true })
+  idVerificationType: 'nin' | 'drivers_license' | null;
+
+  @Column({ type: 'varchar', nullable: true, length: 20 })
+  nin: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  driversLicenseUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  driversLicensePublicId: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'approved', 'rejected'],
+    nullable: true,
+  })
+  idVerificationStatus: 'pending' | 'approved' | 'rejected' | null;
+
   @Column({ type: 'varchar', nullable: true })
   emailVerificationToken: string | null;
 

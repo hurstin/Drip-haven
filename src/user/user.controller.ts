@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { VerifyIdDto } from './dto/verify-id.dto';
 import { Public } from '../auth/decorator/public.decorator';
 import { Roles } from '../auth/decorator/roles.decorator';
 import {
@@ -136,6 +137,71 @@ export class UserController {
   })
   async removeProfilePicture(@Request() req: any) {
     return this.userService.removeProfilePicture(req.user.userId);
+  }
+
+  @Post('verify-id')
+  @UseInterceptors(FileInterceptor('driversLicense'))
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Submit ID verification (NIN or Driver License)',
+    description:
+      'Submit either a National Identification Number (NIN) as a string or upload a driver license image. Exactly one method must be provided.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        nin: {
+          type: 'string',
+          description: 'National Identification Number (NIN)',
+          example: '12345678901',
+        },
+        driversLicense: {
+          type: 'string',
+          format: 'binary',
+          description: 'Driver license image file (JPG, PNG, GIF)',
+        },
+      },
+    },
+  })
+  @ApiOkResponse({
+    description: 'ID verification submitted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example:
+            'ID verification submitted successfully. Awaiting admin approval.',
+        },
+        idVerificationType: {
+          type: 'string',
+          enum: ['nin', 'drivers_license'],
+          example: 'nin',
+        },
+        idVerificationStatus: {
+          type: 'string',
+          enum: ['pending', 'approved', 'rejected'],
+          example: 'pending',
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Invalid request - must provide either NIN or driver license, not both',
+  })
+  async verifyId(
+    @Request() req: any,
+    @Body() verifyIdDto: VerifyIdDto,
+    @UploadedFile() driversLicenseFile?: Express.Multer.File,
+  ) {
+    return this.userService.verifyId(
+      req.user.userId,
+      verifyIdDto.nin,
+      driversLicenseFile,
+    );
   }
 
   // @Patch('update-user')

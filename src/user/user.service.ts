@@ -14,6 +14,7 @@ import { addHours } from 'date-fns'; // npm i date-fns
 import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+// import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class UserService {
@@ -21,6 +22,7 @@ export class UserService {
     @InjectRepository(User) private usersRepository: Repository<User>,
     private mailerService: MailerService,
     private cloudinaryService: CloudinaryService,
+    // private notificationService: NotificationService,
   ) {}
   // Helper: find all users by role
   async findByRole(role: UserRole) {
@@ -421,5 +423,73 @@ export class UserService {
     user.profilePicturePublicId = null;
 
     return this.usersRepository.save(user);
+  }
+
+  async verifyId(
+    userId: number,
+    nin?: string,
+    driversLicenseFile?: Express.Multer.File,
+  ) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Validate that exactly one verification method is provided
+    if (nin && driversLicenseFile) {
+      throw new BadRequestException(
+        'Please provide either NIN or driver license, not both',
+      );
+    }
+
+    if (!nin && !driversLicenseFile) {
+      throw new BadRequestException(
+        'Please provide either NIN or driver license',
+      );
+    }
+
+    // Delete old driver's license if exists and user is submitting a new one
+    if (driversLicenseFile && user.driversLicensePublicId) {
+      await this.cloudinaryService.deleteImage(user.driversLicensePublicId);
+    }
+
+    // Handle NIN verification
+    if (nin) {
+      user.idVerificationType = 'nin';
+      user.nin = nin;
+      user.driversLicenseUrl = null;
+      user.driversLicensePublicId = null;
+      user.idVerificationStatus = 'pending';
+    }
+
+    // Handle driver's license verification
+    if (driversLicenseFile) {
+      // Upload driver's license image to Cloudinary
+      const uploadResult = await this.cloudinaryService.uploadImage(
+        driversLicenseFile,
+        'id-verification',
+      );
+
+      user.idVerificationType = 'drivers_license';
+      user.driversLicenseUrl = uploadResult.url;
+      user.driversLicensePublicId = uploadResult.publicId;
+      user.nin = null;
+      user.idVerificationStatus = 'pending';
+    }
+
+    const savedUser = await this.usersRepository.save(user);
+
+    // Notify admins of new ID verification submission
+    // await this.notificationService.notifyAdmins(
+    //   'New ID verification submitted',
+    //   `User ${user.name} (${user.email}) submitted ${user.idVerificationType === 'nin' ? 'NIN' : 'driver license'} for verification.`,
+    // );
+
+    return {
+      message:
+        'ID verification submitted successfully. Awaiting admin approval.',
+      idVerificationType: savedUser.idVerificationType,
+      idVerificationStatus: savedUser.idVerificationStatus,
+    };
   }
 }
