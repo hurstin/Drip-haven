@@ -65,6 +65,18 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
         ],
         // Note: synchronize=true is convenient in dev, use migrations in prod
         synchronize: true,
+        // ✅ ADD SSL CONFIGURATION FOR AIVEN
+        ssl: true,
+        extra: {
+          ssl: {
+            rejectUnauthorized: false,
+          },
+        },
+
+        // ✅ ADD CONNECTION OPTIONS FOR BETTER STABILITY
+        retryAttempts: 10,
+        retryDelay: 3000,
+        connectTimeoutMS: 10000,
       }),
       inject: [ConfigService],
     }),
