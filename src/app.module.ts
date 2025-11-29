@@ -45,39 +45,45 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
 
-      useFactory: (configService: ConfigService) => ({
-        // PostgreSQL connection settings
-        type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: configService.get('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-        entities: [
-          User,
-          Car,
-          Washer,
-          ServiceMenu,
-          Booking,
-          Notification,
-          Transaction,
-          Review,
-        ],
-        // Note: synchronize=true is convenient in dev, use migrations in prod
-        synchronize: true,
-        // ✅ ADD SSL CONFIGURATION FOR AIVEN
-        ssl: true,
-        extra: {
-          ssl: {
-            rejectUnauthorized: false,
-          },
-        },
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get('NODE_ENV') === 'production';
 
-        // ✅ ADD CONNECTION OPTIONS FOR BETTER STABILITY
-        retryAttempts: 10,
-        retryDelay: 3000,
-        connectTimeoutMS: 10000,
-      }),
+        return {
+          // PostgreSQL connection settings
+          type: 'postgres',
+          host: configService.get('DB_HOST'),
+          port: configService.get('DB_PORT'),
+          username: configService.get('DB_USERNAME'),
+          password: configService.get('DB_PASSWORD'),
+          database: configService.get<string>('DB_DATABASE'),
+          entities: [
+            User,
+            Car,
+            Washer,
+            ServiceMenu,
+            Booking,
+            Notification,
+            Transaction,
+            Review,
+          ],
+          // Note: synchronize=true is convenient in dev, use migrations in prod
+          synchronize: true,
+          // ✅ ADD SSL CONFIGURATION FOR AIVEN
+          ssl: isProduction,
+          extra: isProduction
+            ? {
+                ssl: {
+                  rejectUnauthorized: false,
+                },
+              }
+            : undefined,
+
+          // ✅ ADD CONNECTION OPTIONS FOR BETTER STABILITY
+          retryAttempts: 10,
+          retryDelay: 3000,
+          connectTimeoutMS: 10000,
+        };
+      },
       inject: [ConfigService],
     }),
     MailerModule.forRootAsync({
@@ -86,13 +92,16 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
       useFactory: (configService: ConfigService) => ({
         // SMTP transport configuration
         transport: {
-          host: configService.get('EMAIL_HOST'),
-          port: configService.get('EMAIL_PORT'),
+          host: configService.get('GMAIL_HOST'),
+          port: configService.get('GMAIL_PORT'),
           secure: false,
           auth: {
-            user: configService.get('EMAIL_USERNAME'),
-            pass: configService.get('EMAIL_PASSWORD'),
+            user: configService.get('GMAIL_USERNAME'),
+            pass: configService.get('GMAIL_PASSWORD'),
           },
+        },
+        defaults: {
+          from: `"Drip Haven" <${configService.get<string>('GMAIL_USER')}>`,
         },
       }),
 
