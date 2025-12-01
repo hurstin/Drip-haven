@@ -205,16 +205,16 @@ export class UserService {
 
     // const message = `<p>Click <a href="${verificationURL}">here</a> to verify your email.</p>`;
 
-    try {
-      await this.emailService.sendEmail(
-        user.email,
-        'Welcome to Drip Haven',
-        html,
-      );
-    } catch (error) {
-      console.log('error=>', error);
-      throw new BadRequestException('error sending email,please try again');
-    }
+    // try {
+    //   await this.emailService.sendEmail(
+    //     user.email,
+    //     'Welcome to Drip Haven',
+    //     html,
+    //   );
+    // } catch (error) {
+    //   console.log('error=>', error);
+    //   throw new BadRequestException('error sending email,please try again');
+    // }
 
     // 3. Save user
     const savedUser = await this.usersRepository.save(user);
