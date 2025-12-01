@@ -12,17 +12,15 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { v4 as uuidv4 } from 'uuid'; // npm install uuid
 import { addHours } from 'date-fns'; // npm i date-fns
 import * as bcrypt from 'bcrypt';
-import { MailerService } from '@nestjs-modules/mailer';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-// import { NotificationService } from '../notification/notification.service';
+import { EmailService } from '../notification/email.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
-    private mailerService: MailerService,
+    private emailService: EmailService,
     private cloudinaryService: CloudinaryService,
-    // private notificationService: NotificationService,
   ) {}
   // Helper: find all users by role
   async findByRole(role: UserRole) {
@@ -41,9 +39,9 @@ export class UserService {
       ...createUserDto,
       password: hashedPassword,
       role: createUserDto.role || UserRole.USER, // default to 'user' if not provided
-      isVerified: false,
-      emailVerificationToken: verificationToken,
-      emailVerificationTokenExpires: tokenExpires,
+      isVerified: true,
+      emailVerificationToken: null,
+      emailVerificationTokenExpires: null,
     });
     // send verification token to email
     // const verificationUrl = `https://your-domain.com/auth/verify-email?token=${verificationToken}`; // for real domain
@@ -57,7 +55,7 @@ export class UserService {
      <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verify Your Email Address</title>
+        <title>Welcome to Drip Haven</title>
         <style>
             /* Reset styles */
             body, html {
@@ -179,31 +177,25 @@ export class UserService {
         <div class="container">
             <div class="header">
                 <div class="logo">Drip Haven</div>
-                <h2>Email Verification</h2>
+                <h2>Welcome Aboard!</h2>
             </div>
 
             <div class="content">
-                <h1>Confirm Your Email Address</h1>
-                <p>Thanks for registering! Please verify your email address to activate your account and start using our services.</p>
+                <h1>Welcome to Drip Haven</h1>
+                <p>Thanks for registering! We're excited to have you on board.</p>
 
                 <div class="button-container">
-                    <a href="${verificationURL}" class="verify-button">Verify Email Address</a>
+                    <a href="#" class="verify-button">Go to Dashboard</a>
                 </div>
 
                 <p>If you didn't create an account with us, please ignore this email.</p>
-
-                <p class="small">
-                    Having trouble with the button?<br>
-                    Copy and paste this URL into your browser:<br>
-                    <span style="color: #4299e1; word-break: break-all;">${verificationURL}</span>
-                </p>
             </div>
 
             <div class="footer">
                 <p>&copy; 2025 Drip Haven. All rights reserved.</p>
                 <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">Contact Us</a></p>
                 <p class="small">
-                    This email was sent to you as part of our account verification process.<br>
+                    This email was sent to you as part of our registration process.<br>
                     Please do not reply to this automated message.
                 </p>
             </div>
@@ -214,13 +206,11 @@ export class UserService {
     // const message = `<p>Click <a href="${verificationURL}">here</a> to verify your email.</p>`;
 
     try {
-      await this.mailerService.sendMail({
-        from: 'Drip Haven',
-        to: user.email,
-        subject: 'Verify your email',
-        html: html.replace('${verificationURL}', verificationURL),
-        // text: message,
-      });
+      await this.emailService.sendEmail(
+        user.email,
+        'Welcome to Drip Haven',
+        html,
+      );
     } catch (error) {
       console.log('error=>', error);
       throw new BadRequestException('error sending email,please try again');
@@ -233,7 +223,7 @@ export class UserService {
     const { password, ...result } = savedUser;
     return {
       result,
-      message: 'user created. Please check your email to verify.',
+      message: 'user created successfully',
     };
   }
 
